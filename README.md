@@ -57,11 +57,9 @@ Click on "Display Queue" to view the current queue with priorities.<br>
 ### Queue Analytics
 Click on "Analytics" to view statistics like average waiting time and the total number of persons served.<br>
 
-### Export Queue Data
-Click on "Export Queue" to download the current queue data as a CSV file.<br>
 
 ## Contributing
-1)Fork the repository.
+1)Fork the repository.<br>
 2)Create your feature branch (git checkout -b feature/YourFeature).<br>
 3)Commit your changes (git commit -m 'Add some feature').<br>
 4)Push to the branch (git push origin feature/YourFeature).<br>
