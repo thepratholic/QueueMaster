@@ -1,6 +1,2 @@
-1)Python 3.12.4
-2)flask
-3)html
-4)css
-5)javascript
-6)Queue/Heap(Priority Queue) data structure with it's mechanism
+Flask==2.1.2
+Werkzeug==2.1.2
