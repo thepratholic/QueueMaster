@@ -40,7 +40,19 @@ pip install -r requirements.txt
 python app.py
 ```
 
-6)Open your browser and go to http://127.0.0.1:5000/ to view the application.
+6)Open your browser and go to http://127.0.0.1:5000/ to view the application.<br>
+
+
+## Running the project with docker:
+1)**Build the Docker image:**
+   ```sh
+   docker build -t queuemaster-app .
+   ```
+2)**Run the Docker Container:**
+```sh
+docker run -p 5000:5000 queuemaster-app
+```
+3)Open your browser and go to http://localhost:5000 to access the app.
 
 ## Usage
 ### Insert Person into Queue<br>
