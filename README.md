@@ -69,7 +69,7 @@ Click on "Display Queue" to view the current queue with priorities.<br>
 ### Queue Analytics
 Click on "Analytics" to view statistics like average waiting time and the total number of persons served.<br>
 
-## Some real-world use cases for your QueueMaster project:
+## Some real-world use cases:
 
 1)Customer Service Centers: Managing customer queues at service counters (e.g., banks, government offices) to ensure a smooth and orderly process, reducing wait times and improving customer satisfaction.<br>
 
