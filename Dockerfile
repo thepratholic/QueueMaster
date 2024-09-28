@@ -19,5 +19,3 @@ ENV FLASK_APP=app.py
 # Run the application
 CMD ["flask", "run", "--host=0.0.0.0"]
 
-# set the Maintainer/Owner of the dockerfile
-MAINTAINER Pratham Chelaramani
