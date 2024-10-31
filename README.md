@@ -1,5 +1,5 @@
 # QueueMaster
-QueueMaster is a simple queue management web application built using Flask. It allows users to add, remove, search for persons in the queue, export the queue to a CSV file, and view real-time queue analytics.
+QueueMaster is a simple queue management web application built using Flask. It allows users to add, remove, search for persons in the queue, and view real-time queue analytics.
 
 ## Features
 
