@@ -17,7 +17,7 @@ Python: Core programming language used in this project.<br>
 ## Installation
 1)Clone the repository:
 ```sh
-git clone https://github.com/chelaramanipratham/QueueMaster.git
+git clone https://github.com/prathammkc/QueueMaster.git
 ```
 
 2)Navigate to the project directory:
