@@ -5,7 +5,6 @@ QueueMaster is a simple queue management web application built using Flask. It a
 
 - **Insert**: Add a person to the queue.<br>
 - **Delete**: Remove the person at the front of the queue.<br>
-- **Search**: Check the position of a person in the queue.<br>
 - **Analytics**: View real-time data on the average wait time and the total number of people served.<br>
 
 ## Technologies Used
@@ -17,7 +16,7 @@ Python: Core programming language used in this project.<br>
 ## Installation
 1)Clone the repository:
 ```sh
-git clone https://github.com/prathammkc/QueueMaster.git
+git clone https://github.com/thepratholic/QueueMaster.git
 ```
 
 2)Navigate to the project directory:
