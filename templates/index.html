@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QueueMaster</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </head>
 <body>
+    <div class="toggle-container">
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    
     <div class="main-container">
         <div class="header">
             <h1>QueueMaster</h1>
@@ -32,10 +40,20 @@
             <div class="analytics-data">
                 <p>Total Served: <span id="totalServed">0</span></p>
                 <p>Average Wait Time: <span id="avgWaitTime">0</span> seconds</p>
+                <div class="export-container">
+                    <button id="exportBtn" class="export-button">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <footer id="footer">
+        <p>© 2025 <span class="brand">Pratham Chelaramani</span>. All rights reserved.</p>
+    </footer>
+    
 </body>
 </html>
