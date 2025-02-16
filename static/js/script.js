@@ -1,4 +1,4 @@
-// 
+
 
 document.addEventListener("DOMContentLoaded", function () {
     const personInput = document.getElementById("personInput");
@@ -8,21 +8,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const queueList = document.getElementById("queueList");
     const queueContainer = document.getElementById("queueContainer");
     const toggleSwitch = document.getElementById("darkModeToggle");
+    const tooltip = document.querySelector(".tooltip");
     const body = document.body;
 
     // Dark Mode Setup
     if (localStorage.getItem("darkMode") === "enabled") {
         body.classList.add("dark-mode");
         toggleSwitch.checked = true;
+        tooltip.textContent = "Switch to light mode";
     }
 
     toggleSwitch.addEventListener("change", function () {
         if (this.checked) {
             body.classList.add("dark-mode");
             localStorage.setItem("darkMode", "enabled");
+            tooltip.textContent = "Switch to light mode";
         } else {
             body.classList.remove("dark-mode");
             localStorage.setItem("darkMode", "disabled");
+            tooltip.textContent = "Switch to dark mode";
         }
     });
 
