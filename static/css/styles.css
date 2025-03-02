@@ -1,59 +1,55 @@
-/* Importing Poppins font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
 
-body {
+  body {
+    margin: 0;
+    padding: 0;
     font-family: 'Poppins', sans-serif;
     background-color: #f4f4f4;
     color: #333;
     text-align: center;
     transition: background 0.5s ease, color 0.5s ease;
-}
-
-/* Dark mode styles */
-body.dark-mode {
+  }
+  
+  body.dark-mode {
     background-color: #121212;
     color: #ffffff;
-}
-
-/* Toggle Container */
-.toggle-container {
+  }
+  
+  /* Dark Mode Toggle Container */
+  .toggle-container {
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 20px;
-}
-
-/* Switch Styling */
-.switch {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .switch {
     position: relative;
     display: inline-block;
     width: 60px;
     height: 30px;
     margin: 0 10px;
-}
-
-.switch input {
+  }
+  
+  .switch input {
     opacity: 0;
     width: 0;
     height: 0;
-}
-
-/* Slider Design */
-.slider {
+  }
+  
+  .slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background-color: #6c6c6c;
     transition: 0.4s;
     border-radius: 30px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* White Ball */
-.slider:before {
+  }
+  
+  .slider:before {
     position: absolute;
     content: "";
     height: 24px;
@@ -63,95 +59,196 @@ body.dark-mode {
     background: white;
     transition: 0.4s;
     border-radius: 50%;
-}
-
-
-input:checked + .slider {
+  }
+  
+  input:checked + .slider {
     background-color: #2c3e50;
-}
-
-input:checked + .slider:before {
+  }
+  
+  input:checked + .slider:before {
     transform: translateX(30px);
-}
-
-
-
-/* Queue Master Styling */
-.main-container {
-    max-width: 600px;
-    margin: auto;
-    background: white;
+  }
+  
+  /* Main Wrapper to contain everything */
+  .main-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
+  }
+  
+  /* Header Section */
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .header-left h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+  
+  .header-left p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+  
+  .header-right .logout-link {
+    text-decoration: none;
+    background: #3498db;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+  }
+  
+  .header-right .logout-link:hover {
+    background: #2980b9;
+  }
+  
+  .dark-mode .header-right .logout-link {
+    background: #ff9800;
+  }
+  
+  .dark-mode .header-right .logout-link:hover {
+    background: #e68900;
+  }
+  
+  /* Grid Layout for Main Content */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    gap: 30px;
+  }
+  
+  /* Queue Management Section */
+  .queue-management {
+    background: white;
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    padding: 20px;
     transition: background 0.5s ease;
-}
-
-/* Dark mode for queue */
-.dark-mode .main-container {
+  }
+  
+  .dark-mode .queue-management {
     background: #1e1e1e;
-}
-
-/* Buttons */
-.action-btn {
+  }
+  
+  .queue-management h2 {
+    margin-top: 0;
+  }
+  
+  .queue-interface {
+    margin-bottom: 20px;
+  }
+  
+  .queue-interface input {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    outline: none;
+  }
+  
+  .action-btn {
     background: #3498db;
     border: none;
     padding: 10px 15px;
-    margin: 10px;
+    margin: 5px;
     border-radius: 5px;
     color: white;
     font-size: 16px;
     cursor: pointer;
     transition: 0.3s;
-}
-
-.action-btn:hover {
+  }
+  
+  .action-btn:hover {
     background: #2980b9;
-}
-
-/* Dark mode for buttons */
-.dark-mode .action-btn {
+  }
+  
+  .dark-mode .action-btn {
     background: #ff9800;
-}
-
-.dark-mode .action-btn:hover {
+  }
+  
+  .dark-mode .action-btn:hover {
     background: #e68900;
-}
-
-
-#footer {
-    background: linear-gradient(to right, #111, #333); /* Premium dark gradient */
-    color: #fff;
-    text-align: center;
-    padding: 15px 20px;
-    font-size: 14px;
+  }
+  
+  /* Queue Table */
+  .queue-display {
+    margin-top: 20px;
+  }
+  
+  /* Table styling (same as before) */
+  .styled-table {
+    border-collapse: collapse;
+    margin: 0 auto;
+    font-size: 1em;
     font-family: 'Poppins', sans-serif;
-    letter-spacing: 0.5px;
-    box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
-
-#footer p {
-    margin: 0;
-    opacity: 0.8;
-}
-
-#footer .brand {
-    font-weight: 600;
-    color: #FFD700; /* Gold color for a premium feel */
-}
-
-
-.export-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px; /* Add some space from the top */
-}
-
-.export-button {
+    min-width: 400px;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+  
+  .styled-table thead tr {
+    background-color: #3498db;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .styled-table th,
+  .styled-table td {
+    padding: 12px 15px;
+    text-align: center;
+  }
+  
+  .styled-table tbody tr {
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #dddddd;
+  }
+  
+  .styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #3498db;
+  }
+  
+  /* Dark mode table override */
+  .dark-mode .styled-table tbody tr {
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #444;
+  }
+  
+  /* Analytics Section */
+  .analytics {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    padding: 20px;
+    transition: background 0.5s ease;
+  }
+  
+  .dark-mode .analytics {
+    background: #1e1e1e;
+  }
+  
+  .analytics h2 {
+    margin-top: 0;
+  }
+  
+  .analytics-data p {
+    margin: 10px 0;
+  }
+  
+  /* Export Button */
+  .export-container {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .export-button {
     background: linear-gradient(135deg, #1e3c72, #2a5298);
     color: white;
     font-size: 16px;
@@ -160,29 +257,29 @@ input:checked + .slider:before {
     padding: 12px 20px;
     border-radius: 10px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease-in-out;
-}
-
-.export-button i {
+  }
+  
+  .export-button i {
     font-size: 18px;
-}
-
-.export-button:hover {
+  }
+  
+  .export-button:hover {
     transform: translateY(-2px);
     box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.3);
     background: linear-gradient(135deg, #23395d, #1e3c72);
-}
-
-.export-button:active {
+  }
+  
+  .export-button:active {
     transform: scale(0.98);
-}
-
-/* Tooltip Styling */
-.tooltip {
+  }
+  
+  /* Tooltip for Dark Mode Toggle */
+  .tooltip {
     position: absolute;
     background: rgba(0, 0, 0, 0.85);
     color: white;
@@ -196,22 +293,58 @@ input:checked + .slider:before {
     transform: translateX(-50%) translateY(5px);
     pointer-events: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    
-    /* Adjust tooltip positioning */
-    top: 40px;  /* Moves tooltip below the toggle switch */
+    top: 40px;
     left: 50%;
-}
-
-/* Ensure parent container is relative */
-.toggle-container {
-    position: relative;
-    display: inline-block;
-}
-
-/* Show tooltip on hover */
-.toggle-container:hover .tooltip {
+  }
+  
+  .toggle-container:hover .tooltip {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
+  }
+  
+  /* Footer */
+  #footer {
+    background: linear-gradient(to right, #111, #333);
+    color: #fff;
+    text-align: center;
+    padding: 15px 20px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.5);
+    width: 100%;
+  }
+  
+  #footer p {
+    margin: 0;
+    opacity: 0.8;
+  }
+  
+  #footer .brand {
+    font-weight: 600;
+    color: #FFD700;
+  }
+  
+  /* Example: Add near the bottom of your styles.css */
+.hidden {
+  display: none !important;
 }
 
+/* Make sure html/body take full height */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* The .wrapper is a flex container filling the viewport */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 100% of the browser height */
+}
+
+/* .content expands to fill leftover space, pushing the footer down */
+.content {
+  flex: 1;
+}

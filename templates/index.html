@@ -1,59 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QueueMaster</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <title>QueueMaster</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Configure Tailwind to support dark mode
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* Ensure our custom font is used */
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    /* If you still need to hide elements with .hidden */
+    .hidden { display: none !important; }
+  </style>
 </head>
-<body>
-    <div class="toggle-container">
-        <label class="switch" id="toggleContainer">
-            <input type="checkbox" id="darkModeToggle">
-            <span class="slider round"></span>
+<!-- Updated body classes to include dark variants -->
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+  <!-- .wrapper flex container to enable sticky footer -->
+  <div class="flex flex-col min-h-screen">
+    <!-- .content expands to push footer to bottom -->
+    <div class="flex-grow">
+      <!-- Dark Mode Toggle -->
+      <div class="flex justify-center items-center my-4">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 
+                      peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                      after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Dark Mode</span>
         </label>
-        <span class="tooltip">Switch to dark mode</span>
-    </div>
+      </div>
 
-    
-    
-    <div class="main-container">
-        <div class="header">
-            <h1>QueueMaster</h1>
-            <p>Modern Queue Management System</p>
-        </div>
-        
-        <div class="queue-interface">
-            <input type="text" id="personInput" placeholder="Enter person's name">
-            <button id="insertBtn" class="action-btn">Insert</button>
-            <button id="deleteBtn" class="action-btn">Delete</button>
-            <button id="displayBtn" class="action-btn">Display Queue</button>
-        </div>
+      <!-- Main Wrapper -->
+      <div class="max-w-7xl mx-auto p-4">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-4xl font-bold">QueueMaster</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">Modern Queue Management System</p>
+          </div>
+          <div>
+            <a href="{{ url_for('logout') }}" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Logout</a>
+          </div>
+        </header>
 
-        <div id="queueContainer" class="queue-display hidden">
-            <h2>Current Queue</h2>
-            <ul id="queueList"></ul>
-        </div>
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Queue Management Section -->
+          <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Manage Queue</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+              <input type="text" id="personInput" placeholder="Enter person's name" class="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800 dark:text-gray-100 dark:bg-gray-700">
 
-        <div class="analytics">
-            <h2>Analytics</h2>
-            <div class="analytics-data">
-                <p>Total Served: <span id="totalServed">0</span></p>
-                <p>Average Wait Time: <span id="avgWaitTime">0</span> seconds</p>
-                <div class="export-container">
-                    <button id="exportBtn" class="export-button">
-                        <i class="fas fa-file-pdf"></i> Export PDF
-                    </button>
-                </div>
+              <button id="insertBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Insert</button>
+              <button id="deleteBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Delete</button>
             </div>
+            <div class="flex gap-4 mb-4">
+              <button id="displayBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Display Queue</button>
+              <button id="closeBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Close Queue</button>
+            </div>
+            <!-- Queue Table (initially hidden) -->
+            <div id="queueContainer" class="hidden mt-4">
+              <h2 class="text-xl font-semibold mb-2">Current Queue</h2>
+              <div class="overflow-x-auto">
+                <table id="queueTable" class="min-w-full border">
+                  <thead class="bg-blue-500 text-white">
+                    <tr>
+                      <th class="p-2 border">#</th>
+                      <th class="p-2 border">Person Name</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
+                    <!-- Rows injected by script.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- Analytics Section -->
+          <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Analytics</h2>
+            <div class="space-y-2">
+              <p class="text-lg">Total Served: <span id="totalServed" class="font-bold">0</span></p>
+              <p class="text-lg">Average Wait Time: <span id="avgWaitTime" class="font-bold">0</span> seconds</p>
+            </div>
+            <div class="mt-6 text-center">
+              <button id="exportBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded inline-flex items-center">
+                <i class="fas fa-file-pdf mr-2"></i> Export PDF
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    <footer id="footer">
-        <p>© 2025 <span class="brand">Pratham Chelaramani</span>. All rights reserved.</p>
+    <!-- Footer -->
+    <footer id="footer" class="bg-gray-800 text-gray-200 py-4">
+      <div class="max-w-7xl mx-auto text-center">
+        <p>© 2025 <span class="font-bold text-yellow-400">Pratham Chelaramani</span>. All rights reserved.</p>
+      </div>
     </footer>
+  </div>
+  <!-- End wrapper -->
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

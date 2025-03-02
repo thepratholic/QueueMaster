@@ -1,44 +1,47 @@
-
-
 document.addEventListener("DOMContentLoaded", function () {
     const personInput = document.getElementById("personInput");
     const insertBtn = document.getElementById("insertBtn");
     const deleteBtn = document.getElementById("deleteBtn");
     const displayBtn = document.getElementById("displayBtn");
-    const queueList = document.getElementById("queueList");
+    const closeBtn = document.getElementById("closeBtn");
+    const queueTableBody = document.querySelector("#queueTable tbody");
     const queueContainer = document.getElementById("queueContainer");
     const toggleSwitch = document.getElementById("darkModeToggle");
-    const tooltip = document.querySelector(".tooltip");
-    const body = document.body;
+    
+    // For Tailwind dark mode, toggle the 'dark' class on the <html> element.
+    const rootElement = document.documentElement;
 
-    // Dark Mode Setup
+    // Dark Mode Setup: check localStorage and update the root element accordingly.
     if (localStorage.getItem("darkMode") === "enabled") {
-        body.classList.add("dark-mode");
+        rootElement.classList.add("dark");
         toggleSwitch.checked = true;
-        tooltip.textContent = "Switch to light mode";
+        console.log("Dark mode is enabled on load");
+    } else {
+        rootElement.classList.remove("dark");
+        toggleSwitch.checked = false;
+        console.log("Dark mode is disabled on load");
     }
 
     toggleSwitch.addEventListener("change", function () {
+        console.log("Toggle changed. Checked:", this.checked);
         if (this.checked) {
-            body.classList.add("dark-mode");
+            rootElement.classList.add("dark");
             localStorage.setItem("darkMode", "enabled");
-            tooltip.textContent = "Switch to light mode";
+            console.log("Dark mode turned on");
         } else {
-            body.classList.remove("dark-mode");
+            rootElement.classList.remove("dark");
             localStorage.setItem("darkMode", "disabled");
-            tooltip.textContent = "Switch to dark mode";
+            console.log("Dark mode turned off");
         }
     });
 
     // Insert a person into the queue
     insertBtn.addEventListener("click", function () {
         let personName = personInput.value.trim();
-        
-        if (personName === "") {
+        if (!personName) {
             alert("Please enter a valid name.");
             return;
         }
-
         fetch('/insert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -46,12 +49,14 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json().then(data => ({ status: response.status, body: data })))
         .then(({ status, body }) => {
-            if (status === 400) {
-                alert(body.message); // Show alert only when queue is full
+            if (status !== 200) {
+                alert(body.message);
             }
             personInput.value = "";
-            updateQueue();  // Refresh queue display
-            updateAnalytics(); // Update analytics
+            updateAnalytics();
+            if (!queueContainer.classList.contains("hidden")) {
+                updateQueue();
+            }
         });
     });
 
@@ -60,31 +65,56 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch('/delete', { method: 'POST' })
         .then(response => response.json().then(data => ({ status: response.status, body: data })))
         .then(({ status, body }) => {
-            if (status === 400) {
-                alert(body.message); // Show alert only when queue is empty
+            if (status !== 200) {
+                alert(body.message);
             }
-            updateQueue();  // Refresh queue display
-            updateAnalytics(); // Update analytics
+            updateAnalytics();
+            if (!queueContainer.classList.contains("hidden")) {
+                updateQueue();
+            }
         });
     });
 
-    // Display the queue
+    // Display Queue
     displayBtn.addEventListener("click", function () {
-        updateQueue();
+        showQueue();
     });
+
+    // Close Queue
+    closeBtn.addEventListener("click", function () {
+        closeQueue();
+    });
+
+    function showQueue() {
+        queueContainer.classList.remove("hidden");
+        updateQueue();
+    }
+
+    function closeQueue() {
+        queueContainer.classList.add("hidden");
+    }
 
     function updateQueue() {
         fetch('/display')
             .then(response => response.json())
             .then(data => {
-                queueList.innerHTML = "";
+                queueTableBody.innerHTML = "";
                 data.queue.forEach((person, index) => {
-                    let li = document.createElement("li");
-                    li.textContent = `${index + 1}. ${person}`; // Correctly format index
-                    li.style.listStyle = "none";
-                    queueList.appendChild(li);
+                    let row = document.createElement("tr");
+                    row.className = "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100";
+
+                    let indexCell = document.createElement("td");
+                    indexCell.textContent = index + 1;
+                    indexCell.className = "p-2 border";
+
+                    let nameCell = document.createElement("td");
+                    nameCell.textContent = person;
+                    nameCell.className = "p-2 border";
+
+                    row.appendChild(indexCell);
+                    row.appendChild(nameCell);
+                    queueTableBody.appendChild(row);
                 });
-                queueContainer.classList.remove("hidden");
             });
     }
 
@@ -97,45 +127,38 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Load initial queue data
-    updateQueue();
+    // Initialize the app
     updateAnalytics();
-
-    document.getElementById("exportBtn").addEventListener("click", function () {
-        fetch('/display')
-            .then(response => response.json())
-            .then(data => {
-                if (data.queue.length === 0) {
-                    alert("Queue is empty! No data to export.");
-                    return;
-                }
-
-                // Use jsPDF to create an elegant PDF
-                const { jsPDF } = window.jspdf;
-                let doc = new jsPDF();
-
-                // Premium Styling
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(22);
-                doc.setTextColor(30, 57, 114);
-                doc.text("Queue Data Report", 14, 20);
-
-                doc.setFontSize(12);
-                doc.setTextColor(50, 50, 50);
-                doc.text("Generated on: " + new Date().toLocaleString(), 14, 30);
-
-                let yPos = 50;
-                data.queue.forEach((person, index) => {
+    
+    // Export PDF functionality
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn) {
+        exportBtn.addEventListener("click", function() {
+            fetch('/analytics')
+                .then(response => response.json())
+                .then(data => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Add title
+                    doc.setFontSize(20);
+                    doc.text("QueueMaster Analytics Report", 105, 20, null, null, "center");
+                    
+                    // Add date
+                    doc.setFontSize(12);
+                    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 30, null, null, "center");
+                    
+                    // Add data
                     doc.setFontSize(14);
-                    doc.setTextColor(20, 20, 20);
-                    doc.text(`${index + 1}. ${person}`, 14, yPos);
-                    yPos += 10;
+                    doc.text("Queue Performance Metrics:", 20, 50);
+                    
+                    doc.setFontSize(12);
+                    doc.text(`Total Customers Served: ${data.total_served}`, 30, 60);
+                    doc.text(`Average Wait Time: ${data.avg_wait_time} seconds`, 30, 70);
+                    
+                    // Save PDF
+                    doc.save("QueueMaster-Analytics.pdf");
                 });
-
-                // Smooth save animation
-                setTimeout(() => {
-                    doc.save("Queue_Data.pdf");
-                }, 500);
-            });
-    });
+        });
+    }
 });
