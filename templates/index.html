@@ -15,6 +15,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Socket.IO Client -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+  <!-- Toastify JS for notifications -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
   <style>
     /* Ensure our custom font is used */
     body {
@@ -69,6 +74,15 @@
               <button id="displayBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Display Queue</button>
               <button id="closeBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Close Queue</button>
             </div>
+            
+            <!-- Live Queue Count -->
+            <div class="mt-4 mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg text-center">
+              <p class="text-lg font-medium">
+                <span class="font-bold text-blue-700 dark:text-blue-300">Live Count:</span> 
+                <span id="liveCount" class="text-xl font-bold">0</span> people waiting
+              </p>
+            </div>
+            
             <!-- Queue Table (initially hidden) -->
             <div id="queueContainer" class="hidden mt-4">
               <h2 class="text-xl font-semibold mb-2">Current Queue</h2>
@@ -84,6 +98,14 @@
                     <!-- Rows injected by script.js -->
                   </tbody>
                 </table>
+              </div>
+            </div>
+            
+            <!-- Notifications Area -->
+            <div id="notificationsArea" class="mt-4 h-32 overflow-y-auto bg-gray-100 dark:bg-gray-900 rounded p-2 border border-gray-300 dark:border-gray-700">
+              <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Recent Activity</h3>
+              <div id="notificationsList" class="space-y-2 text-sm">
+                <!-- Notification items will be added here -->
               </div>
             </div>
           </div>
