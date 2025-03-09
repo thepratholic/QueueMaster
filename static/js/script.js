@@ -164,17 +164,40 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(error => console.error("Error loading queue:", error));
     }
     
+    // Update queue display with priority badge that updates instantly
     function updateQueueDisplay(queueData) {
         queueTableBody.innerHTML = "";
         queueData.forEach((entry, index) => {
             let row = document.createElement("tr");
             row.className = "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100";
+            
             let indexCell = document.createElement("td");
             indexCell.textContent = index + 1;
             indexCell.className = "p-2 border";
+            
             let nameCell = document.createElement("td");
-            nameCell.textContent = entry.person_name;
-            nameCell.className = "p-2 border";
+            nameCell.className = "p-2 border flex items-center";
+            let nameSpan = document.createElement("span");
+            nameSpan.textContent = entry.person_name;
+            nameCell.appendChild(nameSpan);
+            
+            // Add a badge if priority is not "normal"
+            if (entry.priority && entry.priority.toLowerCase() !== "normal") {
+                let badge = document.createElement("span");
+                badge.className = "ml-2 inline-block text-xs px-2 py-1 rounded";
+                if (entry.priority.toLowerCase() === "urgent") {
+                    badge.classList.add("bg-red-500", "text-white");
+                    badge.textContent = "Urgent";
+                } else if (entry.priority.toLowerCase() === "low") {
+                    badge.classList.add("bg-blue-500", "text-white");
+                    badge.textContent = "Low";
+                } else {
+                    badge.classList.add("bg-gray-500", "text-white");
+                    badge.textContent = entry.priority;
+                }
+                nameCell.appendChild(badge);
+            }
+            
             row.appendChild(indexCell);
             row.appendChild(nameCell);
             queueTableBody.appendChild(row);
@@ -267,14 +290,19 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(res => res.json())
             .then(data => {
-                if(data.error) alert(data.error);
-                else Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#3b82f6"
-                }).showToast();
+                if(data.error) {
+                    alert(data.error);
+                } else {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#3b82f6"
+                    }).showToast();
+                    // Refresh the displayed queue instantly
+                    loadQueue();
+                }
             })
             .catch(err => console.error("Error setting priority:", err));
         });
@@ -296,14 +324,19 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(res => res.json())
             .then(data => {
-                if(data.error) alert(data.error);
-                else Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#6366f1"
-                }).showToast();
+                if(data.error) {
+                    alert(data.error);
+                } else {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#6366f1"
+                    }).showToast();
+                    // Refresh the displayed queue instantly
+                    loadQueue();
+                }
             })
             .catch(err => console.error("Error setting category:", err));
         });
@@ -351,6 +384,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         position: "right",
                         backgroundColor: "#6366f1"
                     }).showToast();
+                    // Refresh the displayed queue after reordering
+                    loadQueue();
                 })
                 .catch(err => console.error("Error reordering queue:", err));
             }
