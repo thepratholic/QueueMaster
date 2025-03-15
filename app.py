@@ -7,9 +7,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 import logging
-from flask_socketio import SocketIO, emit  # Added for WebSockets
+from flask_socketio import SocketIO, emit  # For WebSockets
 from flask_babel import Babel, _        # For multi-language support
-from twilio.rest import Client            # For SMS notifications
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'replace-with-secure-key'
@@ -37,7 +36,7 @@ login_manager.login_view = 'login'
 mail = Mail(app)
 socketio = SocketIO(app)  # Initialize SocketIO
 
-# Global variable for pause status
+# Global variable for pause status (kept for potential future use)
 paused = False
 
 # Configure logging
@@ -59,13 +58,13 @@ class User(UserMixin, db.Model):
 class QueueEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     person_name = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20))  # NEW: Phone number for SMS notifications
+    # Removed phone field and SMS related features
     arrival_time = db.Column(db.DateTime, default=datetime.utcnow)
     served_time = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='waiting')  # waiting, served, cancelled
-    priority = db.Column(db.String(20), default='normal')   # new field
-    category = db.Column(db.String(50), default='general')  # new field
-    order_index = db.Column(db.Integer, default=0)          # new field for manual ordering
+    priority = db.Column(db.String(20), default='normal')   # basic field; advanced features removed
+    category = db.Column(db.String(50), default='general')    # basic field; advanced features removed
+    order_index = db.Column(db.Integer, default=0)            # used for ordering the queue
 
 # ------------------------
 # User Loader & DB Setup
@@ -235,14 +234,11 @@ def index():
 def queue_insert():
     try:
         person_name = request.form['element']
-        # Get phone number (optional)
-        phone = request.form.get('phone', '').strip()
         if not person_name:
             return jsonify({"message": "Invalid name"}), 400
         max_order = db.session.query(db.func.max(QueueEntry.order_index)).filter(QueueEntry.status=='waiting').scalar() or 0
         new_entry = QueueEntry(
             person_name=person_name,
-            phone=phone,
             priority="normal",
             category="general",
             order_index=max_order + 1
@@ -250,10 +246,6 @@ def queue_insert():
         db.session.add(new_entry)
         db.session.commit()
         logger.info(f"Inserted person '{person_name}' into the queue")
-        
-        # Send SMS if phone number provided
-        if phone:
-            send_sms_notification(phone, f"Hi {person_name}, you have been added to the queue. Your turn is coming soon!")
         
         socketio.emit('notification', {
             'type': 'add',
@@ -269,9 +261,6 @@ def queue_insert():
 @app.route('/delete', methods=['POST'])
 @login_required
 def queue_delete():
-    global paused
-    if paused:
-        return jsonify({"message": "Queue is paused. Cannot serve right now."}), 403
     try:
         entry = QueueEntry.query.filter_by(status='waiting').order_by(QueueEntry.order_index).first()
         if not entry:
@@ -324,59 +313,9 @@ def analytics():
         logger.error("Error in analytics: " + str(e))
         return jsonify({"message": "Internal server error"}), 500
 
-# ------------------------
-# New Endpoints for Advanced Queue Management
-# ------------------------
-@app.route('/api/pause_queue', methods=['POST'])
-@login_required
-def pause_queue():
-    global paused
-    data = request.get_json()
-    paused = data.get('pause', False)
-    return jsonify({"message": f"Queue is now {'paused' if paused else 'active'}", "paused": paused})
-
-@app.route('/api/set_priority', methods=['POST'])
-@login_required
-def set_priority():
-    data = request.get_json()
-    person_name = data.get('name')
-    new_priority = data.get('priority', 'normal')
-    entry = QueueEntry.query.filter_by(person_name=person_name, status='waiting').first()
-    if entry:
-        entry.priority = new_priority
-        db.session.commit()
-        return jsonify({"message": f"Priority for {person_name} set to {new_priority}."})
-    else:
-        return jsonify({"error": f"{person_name} not found in queue"}), 404
-
-@app.route('/api/set_category', methods=['POST'])
-@login_required
-def set_category():
-    data = request.get_json()
-    person_name = data.get('name')
-    category = data.get('category', 'general')
-    entry = QueueEntry.query.filter_by(person_name=person_name, status='waiting').first()
-    if entry:
-        entry.category = category
-        db.session.commit()
-        return jsonify({"message": f"Category for {person_name} set to {category}."})
-    else:
-        return jsonify({"error": f"{person_name} not found in queue"}), 404
-
-@app.route('/api/reorder_queue', methods=['POST'])
-@login_required
-def reorder_queue():
-    data = request.get_json()
-    new_order = data.get('new_order', [])
-    waiting_entries = QueueEntry.query.filter_by(status='waiting').order_by(QueueEntry.order_index).all()
-    mapping = {e.person_name: e for e in waiting_entries}
-    order = 1
-    for name in new_order:
-        if name in mapping:
-            mapping[name].order_index = order
-            order += 1
-    db.session.commit()
-    return jsonify({"message": "Queue reordered successfully!"})
+# ========================
+# Removed Advanced Queue Management Endpoints and Twilio (SMS) features
+# ========================
 
 # ========================
 # NEW CODE FOR USER PROFILE
@@ -405,29 +344,6 @@ def profile():
         return redirect(url_for('profile'))
 
     return render_template('profile.html')
-
-# ------------------------
-# SMS Notification Function using Twilio
-# ------------------------
-from twilio.rest import Client
-
-def send_sms_notification(phone, message):
-    account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
-    auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
-    twilio_number = os.environ.get('TWILIO_PHONE_NUMBER')
-    if not (account_sid and auth_token and twilio_number):
-        logger.error("Twilio credentials not properly configured.")
-        return
-    try:
-        client = Client(account_sid, auth_token)
-        client.messages.create(
-            body=message,
-            from_=twilio_number,
-            to=phone
-        )
-        logger.info(f"SMS sent to {phone}: {message}")
-    except Exception as ex:
-        logger.error("Failed to send SMS: " + str(ex))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

@@ -10,16 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const liveCount = document.getElementById("liveCount");
     const notificationsList = document.getElementById("notificationsList");
     
-    // Advanced controls
-    const pauseBtn = document.getElementById("pauseBtn");
-    const resumeBtn = document.getElementById("resumeBtn");
-    const setPriorityBtn = document.getElementById("setPriorityBtn");
-    const setCategoryBtn = document.getElementById("setCategoryBtn");
-    const advPersonNameInput = document.getElementById("advPersonName");
-    const prioritySelect = document.getElementById("prioritySelect");
-    const catPersonNameInput = document.getElementById("catPersonName");
-    const categoryInput = document.getElementById("categoryInput");
-    
     // WebSocket connection
     let socket = io();
     
@@ -164,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(error => console.error("Error loading queue:", error));
     }
     
-    // Update queue display with priority badge that updates instantly
+    // Update queue display with priority badge (if applicable)
     function updateQueueDisplay(queueData) {
         queueTableBody.innerHTML = "";
         queueData.forEach((entry, index) => {
@@ -202,16 +192,22 @@ document.addEventListener("DOMContentLoaded", function () {
             row.appendChild(nameCell);
             queueTableBody.appendChild(row);
         });
-        enableDragAndDropForQueue();
     }
     
-    // Export PDF functionality
+    // Export PDF functionality with enhanced logging and error handling
     const exportBtn = document.getElementById("exportBtn");
     if (exportBtn) {
         exportBtn.addEventListener("click", function() {
+            console.log("Export button clicked");
             fetch('/analytics')
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Analytics data received:", data);
+                    if (!window.jspdf || !window.jspdf.jsPDF) {
+                        console.error("jsPDF library is not loaded");
+                        alert("Export failed: jsPDF library is not available.");
+                        return;
+                    }
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     doc.setFontSize(20);
@@ -225,180 +221,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     doc.text(`Average Wait Time: ${data.avg_wait_time} seconds`, 30, 70);
                     doc.text(`Current Queue Length: ${liveCount.textContent} people`, 30, 80);
                     doc.save("QueueMaster-Analytics.pdf");
+                })
+                .catch(err => {
+                    console.error("Error exporting PDF:", err);
+                    alert("Export failed due to an error. Please check the console for details.");
                 });
         });
     }
     
-    // Advanced Features
-    
-    // Toggle Pause/Resume
-    if(pauseBtn) {
-        pauseBtn.addEventListener("click", function() {
-            fetch('/api/pause_queue', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pause: true })
-            })
-            .then(res => res.json())
-            .then(data => {
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#f59e0b"
-                }).showToast();
-            })
-            .catch(err => console.error("Error pausing queue:", err));
-        });
-    }
-    
-    if(resumeBtn) {
-        resumeBtn.addEventListener("click", function() {
-            fetch('/api/pause_queue', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pause: false })
-            })
-            .then(res => res.json())
-            .then(data => {
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#10B981"
-                }).showToast();
-            })
-            .catch(err => console.error("Error resuming queue:", err));
-        });
-    }
-    
-    // Set Priority for a specific person
-    if(setPriorityBtn) {
-        setPriorityBtn.addEventListener("click", function() {
-            const personName = advPersonNameInput.value.trim();
-            const newPriority = prioritySelect.value;
-            if(!personName) {
-                alert("Please enter a person name for setting priority.");
-                return;
-            }
-            fetch('/api/set_priority', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: personName, priority: newPriority })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.error) {
-                    alert(data.error);
-                } else {
-                    Toastify({
-                        text: data.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#3b82f6"
-                    }).showToast();
-                    // Refresh the displayed queue instantly
-                    loadQueue();
-                }
-            })
-            .catch(err => console.error("Error setting priority:", err));
-        });
-    }
-    
-    // Set Category for a specific person
-    if(setCategoryBtn) {
-        setCategoryBtn.addEventListener("click", function() {
-            const personName = catPersonNameInput.value.trim();
-            const category = categoryInput.value.trim();
-            if(!personName || !category) {
-                alert("Please enter both person name and category.");
-                return;
-            }
-            fetch('/api/set_category', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: personName, category: category })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.error) {
-                    alert(data.error);
-                } else {
-                    Toastify({
-                        text: data.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#6366f1"
-                    }).showToast();
-                    // Refresh the displayed queue instantly
-                    loadQueue();
-                }
-            })
-            .catch(err => console.error("Error setting category:", err));
-        });
-    }
-    
-    // Enable drag and drop reordering for the queue table
-    function enableDragAndDropForQueue() {
-        const tableBody = document.querySelector("#queueTable tbody");
-        if (!tableBody) return;
-        let dragSrcEl = null;
-    
-        function handleDragStart(e) {
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        }
-    
-        function handleDragOver(e) {
-            if (e.preventDefault) e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-    
-        function handleDrop(e) {
-            if (e.stopPropagation) e.stopPropagation();
-            if (dragSrcEl !== this) {
-                dragSrcEl.innerHTML = this.innerHTML;
-                this.innerHTML = e.dataTransfer.getData('text/html');
-                const newOrder = [];
-                tableBody.querySelectorAll('tr').forEach(row => {
-                    const nameCell = row.cells[1];
-                    if (nameCell) newOrder.push(nameCell.textContent.trim());
-                });
-                fetch('/api/reorder_queue', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ new_order: newOrder })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    Toastify({
-                        text: data.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#6366f1"
-                    }).showToast();
-                    // Refresh the displayed queue after reordering
-                    loadQueue();
-                })
-                .catch(err => console.error("Error reordering queue:", err));
-            }
-            return false;
-        }
-    
-        tableBody.querySelectorAll('tr').forEach(row => {
-            row.setAttribute('draggable', true);
-            row.addEventListener('dragstart', handleDragStart, false);
-            row.addEventListener('dragover', handleDragOver, false);
-            row.addEventListener('drop', handleDrop, false);
-        });
-    }
+    // Advanced features removed entirely.
     
     // Initial load system message
     addNotification('System', 'Queue system initialized');
