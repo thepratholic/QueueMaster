@@ -12,7 +12,10 @@ from flask_babel import Babel, _        # For multi-language support
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'replace-with-secure-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///queue.db'
+
+# PostgreSQL connection string
+# Format: postgresql://username:password@host:port/database_name
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Apple%402019%28%29@localhost:5432/queuemaster_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Email configuration
@@ -40,7 +43,14 @@ socketio = SocketIO(app)  # Initialize SocketIO
 paused = False
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("queuemaster.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger('queue_app')
 
 # ------------------------
@@ -77,18 +87,25 @@ def load_user(user_id):
 def create_tables():
     # Only run this code once
     if not hasattr(app, 'db_initialized'):
-        db.create_all()
-        if not User.query.filter_by(username='admin').first():
-            admin = User(
-                username='admin',
-                email='admin@example.com',
-                mobile='+10000000000',
-                password='admin',
-                is_verified=True
-            )
-            db.session.add(admin)
-            db.session.commit()
-        app.db_initialized = True
+        try:
+            logger.info("Initializing database tables...")
+            db.create_all()
+            if not User.query.filter_by(username='admin').first():
+                logger.info("Creating admin user...")
+                admin = User(
+                    username='admin',
+                    email='admin@example.com',
+                    mobile='+10000000000',
+                    password='admin',
+                    is_verified=True
+                )
+                db.session.add(admin)
+                db.session.commit()
+                logger.info("Admin user created successfully")
+            app.db_initialized = True
+            logger.info("Database initialization complete")
+        except Exception as e:
+            logger.error(f"Error initializing database: {str(e)}")
 
 # ------------------------
 # Helper Functions for Password Reset
@@ -132,8 +149,79 @@ def emit_queue_update():
                 'avg_wait_time': round(avg_wait_time, 2)
             }
         })
+        logger.info(f"Queue update emitted: {waiting_count} waiting")
     except Exception as e:
         logger.error("Error emitting queue update: " + str(e))
+
+# ------------------------
+# Debug Routes
+# ------------------------
+@app.route('/debug/users')
+@login_required
+def debug_users():
+    if not current_user.username == 'admin':
+        logger.warning(f"Unauthorized access to debug/users by {current_user.username}")
+        return jsonify({"message": "Not authorized"}), 403
+    users = User.query.all()
+    user_list = [{
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "mobile": user.mobile,
+        "is_verified": user.is_verified
+    } for user in users]
+    logger.info(f"Debug users accessed: {len(user_list)} users found")
+    return jsonify(user_list)
+
+@app.route('/debug/queue')
+@login_required
+def debug_queue():
+    if not current_user.username == 'admin':
+        logger.warning(f"Unauthorized access to debug/queue by {current_user.username}")
+        return jsonify({"message": "Not authorized"}), 403
+    entries = QueueEntry.query.all()
+    entry_list = [{
+        "id": entry.id,
+        "person_name": entry.person_name,
+        "status": entry.status,
+        "priority": entry.priority,
+        "category": entry.category,
+        "order_index": entry.order_index,
+        "arrival_time": entry.arrival_time.isoformat() if entry.arrival_time else None,
+        "served_time": entry.served_time.isoformat() if entry.served_time else None
+    } for entry in entries]
+    logger.info(f"Debug queue accessed: {len(entry_list)} entries found")
+    return jsonify(entry_list)
+
+@app.route('/debug/db-info')
+@login_required
+def debug_db_info():
+    if not current_user.username == 'admin':
+        logger.warning(f"Unauthorized access to debug/db-info by {current_user.username}")
+        return jsonify({"message": "Not authorized"}), 403
+    try:
+        # Get database info 
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        
+        # Get table statistics
+        table_stats = {}
+        for table in tables:
+            count = db.session.execute(f'SELECT COUNT(*) FROM "{table}"').scalar()
+            table_stats[table] = count
+            
+        info = {
+            "database_type": db.engine.name,
+            "database_url": app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1],  # Hiding credentials
+            "tables": tables,
+            "table_stats": table_stats
+        }
+        logger.info(f"Database info accessed: {len(tables)} tables found")
+        return jsonify(info)
+    except Exception as e:
+        logger.error(f"Error getting database info: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 # ------------------------
 # Routes for Authentication
@@ -147,12 +235,20 @@ def signup():
         password = request.form.get('password').strip()
         if User.query.filter((User.username == username) | (User.email == email) | (User.mobile == mobile)).first():
             flash(_('Username, Email or Mobile already exists'), 'danger')
+            logger.warning(f"Signup failed: Email {email} or username {username} already exists")
             return redirect(url_for('signup'))
-        new_user = User(username=username, email=email, mobile=mobile, password=password, is_verified=True)
-        db.session.add(new_user)
-        db.session.commit()
-        flash(_('Account created! You can now log in.'), 'success')
-        return redirect(url_for('login'))
+        try:
+            new_user = User(username=username, email=email, mobile=mobile, password=password, is_verified=True)
+            db.session.add(new_user)
+            db.session.commit()
+            logger.info(f"New user created: {username} (ID: {new_user.id})")
+            flash(_('Account created! You can now log in.'), 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating user: {str(e)}")
+            flash(_('An error occurred. Please try again.'), 'danger')
+            return redirect(url_for('signup'))
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -167,15 +263,18 @@ def login():
         ).first()
         if user:
             login_user(user, remember=remember)
+            logger.info(f"User logged in: {user.username} (ID: {user.id})")
             flash(_('Logged in successfully!'), 'success')
             return redirect(url_for('index'))
         else:
+            logger.warning(f"Failed login attempt for username/email: {username_or_email}")
             flash(_('Invalid credentials'), 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
+    logger.info(f"User logged out: {current_user.username} (ID: {current_user.id})")
     logout_user()
     flash(_('Logged out.'), 'info')
     return redirect(url_for('login'))
@@ -192,11 +291,13 @@ def forgot_password():
             msg.body = f"Hi {user.username},\n\nTo reset your password, click the following link:\n{reset_url}\n\nIf you did not request a password reset, please ignore this email."
             try:
                 mail.send(msg)
+                logger.info(f"Password reset email sent to: {email}")
                 flash(_('A reset link has been sent to your email.'), "success")
             except Exception as e:
-                logger.error("Error sending reset email: " + str(e))
+                logger.error(f"Error sending reset email to {email}: {str(e)}")
                 flash(_('Error sending email. Please try again later.'), "danger")
         else:
+            logger.warning(f"Password reset attempted for non-existent email: {email}")
             flash(_('Email not found.'), "danger")
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
@@ -205,6 +306,7 @@ def forgot_password():
 def reset_password(token):
     email = verify_reset_token(token)
     if not email:
+        logger.warning(f"Invalid or expired password reset token used")
         flash(_("The reset link is invalid or has expired."), "danger")
         return redirect(url_for('forgot_password'))
     if request.method == 'POST':
@@ -217,16 +319,16 @@ def reset_password(token):
         if user:
             user.password = password
             db.session.commit()
+            logger.info(f"Password reset successful for: {email}")
             flash(_("Your password has been updated. Please log in."), "success")
             return redirect(url_for('login'))
     return render_template('reset_password.html', token=token)
 
-# ------------------------
-# Routes for Queue Management
-# ------------------------
+
 @app.route('/')
 @login_required
 def index():
+    logger.info(f"Index page accessed by: {current_user.username}")
     return render_template('index.html')
 
 @app.route('/insert', methods=['POST'])
@@ -235,6 +337,7 @@ def queue_insert():
     try:
         person_name = request.form['element']
         if not person_name:
+            logger.warning("Insert attempt with empty name")
             return jsonify({"message": "Invalid name"}), 400
         max_order = db.session.query(db.func.max(QueueEntry.order_index)).filter(QueueEntry.status=='waiting').scalar() or 0
         new_entry = QueueEntry(
@@ -245,7 +348,7 @@ def queue_insert():
         )
         db.session.add(new_entry)
         db.session.commit()
-        logger.info(f"Inserted person '{person_name}' into the queue")
+        logger.info(f"Inserted person '{person_name}' into the queue with ID: {new_entry.id}")
         
         socketio.emit('notification', {
             'type': 'add',
@@ -255,7 +358,8 @@ def queue_insert():
         
         return jsonify({"message": "Person inserted into the queue"})
     except Exception as e:
-        logger.error("Error inserting person: " + str(e))
+        db.session.rollback()
+        logger.error(f"Error inserting person: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/delete', methods=['POST'])
@@ -264,13 +368,14 @@ def queue_delete():
     try:
         entry = QueueEntry.query.filter_by(status='waiting').order_by(QueueEntry.order_index).first()
         if not entry:
+            logger.warning("Delete attempt on empty queue")
             return jsonify({"message": "Queue Underflow"}), 400
         
         person_name = entry.person_name
         entry.status = 'served'
         entry.served_time = datetime.utcnow()
         db.session.commit()
-        logger.info(f"Deleted (served) person '{person_name}' from the queue")
+        logger.info(f"Deleted (served) person '{person_name}' from the queue (ID: {entry.id})")
         
         socketio.emit('notification', {
             'type': 'remove',
@@ -280,7 +385,8 @@ def queue_delete():
         
         return jsonify({"message": f"Deleted: {person_name}"})
     except Exception as e:
-        logger.error("Error deleting person: " + str(e))
+        db.session.rollback()
+        logger.error(f"Error deleting person: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/display')
@@ -289,9 +395,10 @@ def display_queue():
     try:
         entries = QueueEntry.query.filter_by(status='waiting').order_by(QueueEntry.order_index).all()
         queue_list = [{"person_name": e.person_name, "priority": e.priority, "category": e.category} for e in entries]
+        logger.info(f"Queue displayed: {len(queue_list)} entries")
         return jsonify({"queue": queue_list})
     except Exception as e:
-        logger.error("Error displaying queue: " + str(e))
+        logger.error(f"Error displaying queue: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/analytics')
@@ -305,21 +412,16 @@ def analytics():
             for entry in served_entries if entry.served_time
         ], 0)
         avg_wait_time = total_wait_time / total_served if total_served else 0
+        logger.info(f"Analytics accessed: {total_served} served entries")
         return jsonify({
             "total_served": total_served,
             "avg_wait_time": round(avg_wait_time, 2)
         })
     except Exception as e:
-        logger.error("Error in analytics: " + str(e))
+        logger.error(f"Error in analytics: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
-# ========================
-# Removed Advanced Queue Management Endpoints and Twilio (SMS) features
-# ========================
 
-# ========================
-# NEW CODE FOR USER PROFILE
-# ========================
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -335,15 +437,22 @@ def profile():
             flash(_('All fields are required.'), 'danger')
             return redirect(url_for('profile'))
 
-        current_user.username = new_username
-        current_user.email = new_email
-        current_user.mobile = new_mobile
-        db.session.commit()
-
-        flash(_('Profile updated successfully!'), 'success')
+        try:
+            current_user.username = new_username
+            current_user.email = new_email
+            current_user.mobile = new_mobile
+            db.session.commit()
+            logger.info(f"User profile updated: {current_user.id}")
+            flash(_('Profile updated successfully!'), 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating profile for user {current_user.id}: {str(e)}")
+            flash(_('Error updating profile. Please try again.'), 'danger')
+            
         return redirect(url_for('profile'))
 
     return render_template('profile.html')
 
 if __name__ == '__main__':
+    logger.info("Starting QueueMaster application...")
     socketio.run(app, debug=True)

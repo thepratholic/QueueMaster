@@ -1,0 +1,41 @@
+2025-04-07 07:22:44,426 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:22:44,431 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:22:44,433 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:22:44,889 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 07:22:44,945 - queue_app - ERROR - Error emitting queue update: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-07 07:22:49,062 - queue_app - INFO - Initializing database tables...
+2025-04-07 07:22:49,109 - queue_app - ERROR - Error initializing database: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-07 07:23:45,302 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:23:46,688 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:23:46,692 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:23:46,694 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:23:48,838 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:23:50,153 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:23:50,157 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:23:50,160 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:23:52,285 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:23:53,647 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:23:53,652 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:23:53,654 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:23:54,770 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:23:56,131 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:23:56,136 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:23:56,138 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:23:57,256 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:23:58,619 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:23:58,624 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:23:58,627 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:23:59,744 - werkzeug - INFO -  * Detected change in 'C:\\Users\\LENOVO\\QueueMaster\\app.py', reloading
+2025-04-07 07:24:01,087 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 07:24:01,092 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 07:24:01,094 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 07:24:04,434 - queue_app - INFO - Initializing database tables...
+2025-04-07 07:24:04,607 - queue_app - INFO - Database initialization complete
+2025-04-07 07:24:04,610 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 07:24:04,794 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 07:24:04,800 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 07:24:16,141 - queue_app - INFO - User logged out: admin (ID: 1)
