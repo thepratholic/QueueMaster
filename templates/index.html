@@ -48,10 +48,12 @@
       <p class="text-sm text-gray-300">{{ _('Modern Queue Management System') }}</p>
     </div>
     <div class="flex items-center space-x-4">
-      <!-- Profile Link -->
-      <a href="{{ url_for('profile') }}" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded">
-        {{ _('Profile') }}
-      </a>
+
+      <!-- Help Button -->
+      <button id="helpBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded">
+        {{ _('Help') }}
+      </button>
+
       <!-- Dark Mode Toggle -->
       <label class="relative inline-flex items-center cursor-pointer">
         <input type="checkbox" id="darkModeToggle" class="sr-only peer">
@@ -63,6 +65,12 @@
                     after:h-5 after:w-5 after:transition-all"></div>
         <span class="ml-2 text-sm font-medium text-gray-100">{{ _('Dark Mode') }}</span>
       </label>
+
+        <!-- Profile Link -->
+      <a href="{{ url_for('profile') }}" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded">
+        {{ _('Profile') }}
+      </a>
+    
       <!-- Logout Button -->
       <a href="{{ url_for('logout') }}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
         {{ _('Logout') }}
@@ -152,10 +160,46 @@
   </div>
   </main>
 
-  <!-- FOOTER -->
+  <!-- Dark Gradient Footer (Full Width) -->
   <footer class="bg-gray-800 text-gray-200 py-4 text-center">
-    <p>© 2025 <span class="font-bold text-yellow-400">Pratham Chelaramani</span>. {{ _('All rights reserved.') }}</p>
+    <div class="container mx-auto flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-6">
+      <p class="font-bold text-amber-600">© 2025 <span class="font-bold text-amber-600">Pratham Chelaramani</span>. All rights reserved.
+      </p>
+      <div class="flex space-x-4">
+        <a href="https://github.com/thepratholic" target="_blank" rel="noopener noreferrer"
+          class="font-bold text-amber-600">
+          GitHub
+        </a>
+        <a href="https://www.linkedin.com/in/thepratholic" target="_blank" rel="noopener noreferrer"
+          class="font-bold text-amber-600">
+          LinkedIn
+        </a>
+        <a href="mailto:chelaramanipratham@gmail.com" class="font-bold text-amber-600">
+          Email
+        </a>
+      </div>
+    </div>
   </footer>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 max-w-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">{{ _('Help') }}</h3>
+        <button id="closeHelpBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div class="text-gray-700 dark:text-gray-300">
+        <p>{{ _("Welcome to QueueMaster! Here are some instructions to help you get started:") }}</p>
+        <ul class="list-disc ml-6 mt-2">
+          <li>{{ _("To join the queue, enter your name in the input field and click 'Insert'.") }}</li>
+          <li>{{ _("To serve a customer, click 'Delete' to remove the first person in the queue.") }}</li>
+          <li>{{ _("Click 'Display Queue' to view the current queue; 'Close Queue' hides the list.") }}</li>
+          <li>{{ _("Analytics such as total served and average wait time update automatically.") }}</li>
+          <li>{{ _("By clicking on the Export PDF button, you can download the current Queue Status locally on your Machine.") }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <!-- Link your main JS file last -->
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>

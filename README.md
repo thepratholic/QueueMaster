@@ -1,17 +1,39 @@
 # QueueMaster
-QueueMaster is a simple queue management web application built using Flask. It allows users to add, remove, search for persons in the queue, and view real-time queue analytics.
+QueueMaster is a modern, full-stack web application designed to manage real-life queues for customer service centers (e.g., banks, government offices). It provides real-time queue updates, analytics, and multi-language support using Flask, SocketIO, and PostgreSQL (or SQLite for testing). The project offers a user-friendly interface with dark mode support and an integrated help modal for new users.
 
 ## Features
 
-- **Insert**: Add a person to the queue.<br>
-- **Delete**: Remove the person at the front of the queue.<br>
-- **Analytics**: View real-time data on the average wait time and the total number of people served.<br>
+
+**Real-Time Queue Updates**:
+Uses Flask-SocketIO to update the queue and analytics in real time without the need for manual refresh.<br>
+
+**User Authentication**:
+Sign-up, login, logout, and password reset functionality implemented with Flask-Login and Flask-Mail.<br>
+
+**Multi-Language Support**:
+Integrated with Flask-Babel to support multiple languages (English, Spanish, French).<br>
+
+**Analytics**:
+Displays total customers served and average wait time, with an option to export analytics as a PDF report using jsPDF.<br>
+
+**Responsive UI with Dark Mode**:
+Built using Tailwind CSS, ensuring a responsive, modern interface with dark mode.<br>
+
+**Help Modal**:
+A built-in help modal provides new users with instructions on how to use the application.<br>
 
 ## Technologies Used
-Flask: Python web framework used to create the backend.<br>
-HTML/CSS: For the frontend interface.<br>
-JavaScript: For interactivity and AJAX requests. <br>
-Python: Core programming language used in this project.<br>
+**Backend**:
+Python, Flask, Flask-Login, Flask-Mail, Flask-SocketIO, Flask-Babel<br>
+
+**Database**:
+SQLite (default for development) and PostgreSQL (for production, configurable via environment variable)<br>
+
+**Frontend**:
+HTML, Tailwind CSS, Vanilla JavaScript, jsPDF, Toastify.js, Socket.IO Client<br>
+
+**Others**:
+psycopg2 (for PostgreSQL connection pooling)<br>
 
 ## Installation
 1)Clone the repository:
@@ -42,20 +64,6 @@ python app.py
 6)Open your browser and go to http://127.0.0.1:5000/ to view the application.<br>
 
 
-## Usage
-### Insert Person into Queue<br>
-Go to the main page.<br>
-Enter the person's name and priority level.<br>
-Click on "Insert" to add the person to the queue.<br>
-
-### Delete Person from Queue
-Click on the "Delete" button to remove the person at the front of the queue.<br>
-
-### View Queue
-Click on "Display Queue" to view the current queue with priorities.<br>
-
-### Queue Analytics
-Click on "Analytics" to view statistics like average waiting time and the total number of persons served.<br>
 
 ## Some real-world use cases:
 

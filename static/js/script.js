@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleSwitch = document.getElementById("darkModeToggle");
     const liveCount = document.getElementById("liveCount");
     const notificationsList = document.getElementById("notificationsList");
+
+    // Help Modal Elements
+    const helpBtn = document.getElementById("helpBtn");
+    const helpModal = document.getElementById("helpModal");
+    const closeHelpBtn = document.getElementById("closeHelpBtn");
     
     // WebSocket connection
     let socket = io();
@@ -229,7 +234,21 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    // Advanced features removed entirely.
+    // Help Modal functionality
+    if (helpBtn && helpModal && closeHelpBtn) {
+        helpBtn.addEventListener("click", function() {
+            helpModal.classList.remove("hidden");
+        });
+        closeHelpBtn.addEventListener("click", function() {
+            helpModal.classList.add("hidden");
+        });
+        // Close modal when clicking outside the modal content
+        helpModal.addEventListener("click", function(e) {
+            if (e.target === helpModal) {
+                helpModal.classList.add("hidden");
+            }
+        });
+    }
     
     // Initial load system message
     addNotification('System', 'Queue system initialized');

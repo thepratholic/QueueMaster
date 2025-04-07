@@ -39,3 +39,45 @@
 2025-04-07 07:24:04,794 - queue_app - INFO - Client connected to WebSocket
 2025-04-07 07:24:04,800 - queue_app - INFO - Queue update emitted: 0 waiting
 2025-04-07 07:24:16,141 - queue_app - INFO - User logged out: admin (ID: 1)
+2025-04-07 14:01:24,036 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 14:01:24,339 - werkzeug - INFO -  * Restarting with stat
+2025-04-07 14:01:25,548 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 14:01:25,554 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 14:01:25,557 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 14:01:28,534 - queue_app - INFO - Initializing database tables...
+2025-04-07 14:01:28,658 - queue_app - INFO - Database initialization complete
+2025-04-07 14:01:40,363 - queue_app - INFO - User logged in: admin (ID: 1)
+2025-04-07 14:01:40,373 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:01:40,549 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:01:40,559 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:04:45,445 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:04:45,612 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:04:45,617 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:09:45,473 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 14:09:45,573 - werkzeug - INFO -  * Restarting with stat
+2025-04-07 14:09:46,808 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 14:09:46,814 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 14:09:46,816 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 14:09:47,587 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:09:47,654 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:09:50,734 - queue_app - INFO - Initializing database tables...
+2025-04-07 14:09:50,744 - queue_app - INFO - Database initialization complete
+2025-04-07 14:09:50,748 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:09:50,925 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:09:50,929 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:11:33,550 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:11:33,723 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:11:33,727 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:12:47,718 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:12:47,861 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:12:47,864 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:17:55,296 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:17:55,465 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:17:55,467 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:26:05,841 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:26:06,029 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:26:06,032 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 14:27:11,010 - queue_app - INFO - Analytics accessed: 3 served entries
+2025-04-07 14:28:15,136 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 14:28:15,270 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 14:28:15,273 - queue_app - INFO - Queue update emitted: 0 waiting
