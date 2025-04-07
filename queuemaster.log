@@ -81,3 +81,25 @@
 2025-04-07 14:28:15,136 - queue_app - INFO - Index page accessed by: admin
 2025-04-07 14:28:15,270 - queue_app - INFO - Client connected to WebSocket
 2025-04-07 14:28:15,273 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 20:34:43,066 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 20:34:43,270 - werkzeug - INFO -  * Restarting with stat
+2025-04-07 20:34:44,411 - queue_app - INFO - Starting QueueMaster application...
+2025-04-07 20:34:44,416 - werkzeug - WARNING -  * Debugger is active!
+2025-04-07 20:34:44,418 - werkzeug - INFO -  * Debugger PIN: 447-406-176
+2025-04-07 20:34:52,554 - queue_app - INFO - Initializing database tables...
+2025-04-07 20:34:57,810 - queue_app - INFO - Creating admin user...
+2025-04-07 20:34:58,244 - queue_app - INFO - Admin user created successfully
+2025-04-07 20:34:58,245 - queue_app - INFO - Database initialization complete
+2025-04-07 20:34:58,689 - queue_app - INFO - Index page accessed by: admin
+2025-04-07 20:34:59,504 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 20:35:00,112 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 20:35:49,084 - queue_app - INFO - User logged out: admin (ID: 1)
+2025-04-07 20:36:07,915 - queue_app - INFO - New user created: notstack (ID: 2)
+2025-04-07 20:36:19,180 - queue_app - INFO - User logged in: notstack (ID: 2)
+2025-04-07 20:36:19,841 - queue_app - INFO - Index page accessed by: notstack
+2025-04-07 20:36:20,164 - queue_app - INFO - Client connected to WebSocket
+2025-04-07 20:36:20,787 - queue_app - INFO - Queue update emitted: 0 waiting
+2025-04-07 20:36:35,505 - queue_app - INFO - Inserted person 'pprakhar' into the queue with ID: 1
+2025-04-07 20:36:35,907 - queue_app - INFO - Queue update emitted: 1 waiting
+2025-04-07 20:36:45,578 - queue_app - INFO - Inserted person 'diya' into the queue with ID: 2
+2025-04-07 20:36:45,954 - queue_app - INFO - Queue update emitted: 2 waiting

@@ -15,7 +15,7 @@ app.config['SECRET_KEY'] = 'replace-with-secure-key'
 
 # PostgreSQL connection string
 # Format: postgresql://username:password@host:port/database_name
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Apple%402019%28%29@localhost:5432/queuemaster_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://us8ezqh35jotvti75wi2:ibvxGsRNUv3UyUN0D0sxAgh376JQOr@bz0jiaejnjd8ojseydwo-postgresql.services.clever-cloud.com:50013/bz0jiaejnjd8ojseydwo'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Email configuration
