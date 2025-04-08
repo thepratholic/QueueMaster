@@ -485,7 +485,7 @@ username = quote_plus("chelaramanipratham350")
 password = quote_plus("Apple@2025()")
 MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/?retryWrites=true&w=majority&appName=queuemaster-cluster"
 client = MongoClient(MONGODB_URI)
-mongo_db = client['queuemaster']  # Use the database name you created
+mongo_db = client['queuemaster']
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
