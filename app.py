@@ -13,7 +13,7 @@ from bson.objectid import ObjectId
 from urllib.parse import quote_plus
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'replace-with-secure-key'
+app.config['SECRET_KEY'] = 'my-very-secret-key-123!'
 
 # MongoDB connection
 username = quote_plus("chelaramanipratham350")
