@@ -9,52 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleSwitch = document.getElementById("darkModeToggle");
     const liveCount = document.getElementById("liveCount");
     const notificationsList = document.getElementById("notificationsList");
+    const exportBtn = document.getElementById("exportBtn");
 
-    // Help Modal Elements
-    const helpBtn = document.getElementById("helpBtn");
-    const helpModal = document.getElementById("helpModal");
-    const closeHelpBtn = document.getElementById("closeHelpBtn");
-    
-    // WebSocket connection
-    let socket = io();
-    
-    // Socket event listeners
-    socket.on('connect', function() {
-        console.log('WebSocket connected');
-        addNotification('System', 'Connected to real-time updates');
-    });
-    
-    socket.on('disconnect', function() {
-        console.log('WebSocket disconnected');
-        addNotification('System', 'Disconnected from real-time updates', 'warning');
-    });
-    
-    socket.on('queue_update', function(data) {
-        console.log('Queue update received:', data);
-        if (!queueContainer.classList.contains("hidden")) {
-            updateQueueDisplay(data.queue);
-        }
-        liveCount.textContent = data.waiting_count;
-        if (data.analytics) {
-            document.getElementById('totalServed').textContent = data.analytics.total_served;
-            document.getElementById('avgWaitTime').textContent = data.analytics.avg_wait_time;
-        }
-    });
-    
-    socket.on('notification', function(data) {
-        console.log('Notification received:', data);
-        Toastify({
-            text: data.message,
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: data.type === 'add' ? "#10B981" : "#EF4444",
-            stopOnFocus: true
-        }).showToast();
-        addNotification(data.type === 'add' ? 'Added' : 'Removed', data.message);
-    });
-    
+    // --------------------------
+    // Notification Function
+    // --------------------------
     function addNotification(type, message, messageType = 'info') {
         const notificationItem = document.createElement('div');
         let typeClass = 'text-blue-600 dark:text-blue-400';
@@ -70,8 +29,8 @@ document.addEventListener("DOMContentLoaded", function () {
         notificationItem.innerHTML = `
             <span class="inline-block w-16 text-xs text-gray-500 dark:text-gray-400">${timestamp}</span>
             <span class="font-medium ${typeClass} mr-1">${type}:</span>
-            <span class="text-gray-700 dark:text-gray-300">${message}</span>
-        `;
+            <span class="text-gray-700 dark:text-gray-300">${message}</span>`;
+            
         notificationsList.prepend(notificationItem);
         const items = notificationsList.children;
         if (items.length > 20) {
@@ -79,7 +38,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
+    // --------------------------
     // Dark Mode Setup
+    // --------------------------
     const rootElement = document.documentElement;
     if (localStorage.getItem("darkMode") === "enabled") {
         rootElement.classList.add("dark");
@@ -98,70 +59,38 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // Insert a person
-    insertBtn.addEventListener("click", function () {
-        let personName = personInput.value.trim();
-        if (!personName) {
-            alert("Please enter a valid name.");
-            return;
-        }
-        fetch('/insert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'element': personName })
-        })
-        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-        .then(({ status, body }) => {
-            if (status !== 200) {
-                alert(body.message);
-            }
-            personInput.value = "";
-        });
-    });
-    
-    // Delete the first person
-    deleteBtn.addEventListener("click", function () {
-        fetch('/delete', { method: 'POST' })
-        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-        .then(({ status, body }) => {
-            if (status !== 200) {
-                alert(body.message);
-            }
-        });
-    });
-    
-    // Display Queue
-    displayBtn.addEventListener("click", function () {
-        showQueue();
-    });
-    
-    // Close Queue
-    closeBtn.addEventListener("click", function () {
-        closeQueue();
-    });
-    
-    function showQueue() {
-        queueContainer.classList.remove("hidden");
-        loadQueue();
-    }
-    
-    function closeQueue() {
-        queueContainer.classList.add("hidden");
-    }
-    
-    // Fetch and update queue display
+    // --------------------------
+    // Refresh Functions: Queue and Analytics
+    // --------------------------
     function loadQueue() {
+        console.log("Fetching queue data...");
         fetch('/display')
         .then(response => response.json())
         .then(data => {
+            console.log("Raw queue data received:", JSON.stringify(data));
             updateQueueDisplay(data.queue);
+            // Update live count from the length of the queue data:
+            liveCount.textContent = data.queue.length;
         })
         .catch(error => console.error("Error loading queue:", error));
     }
     
-    // Update queue display with priority badge (if applicable)
+    function fetchAnalytics() {
+        fetch('/analytics')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalServed').textContent = data.total_served;
+            document.getElementById('avgWaitTime').textContent = data.avg_wait_time;
+        })
+        .catch(err => console.error("Error fetching analytics:", err));
+    }
+    
+    // --------------------------
+    // Update Queue Display
+    // --------------------------
     function updateQueueDisplay(queueData) {
         queueTableBody.innerHTML = "";
+        console.log("Updating queue display with data:", queueData);
         queueData.forEach((entry, index) => {
             let row = document.createElement("tr");
             row.className = "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100";
@@ -199,8 +128,102 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    // Export PDF functionality with enhanced logging and error handling
-    const exportBtn = document.getElementById("exportBtn");
+    // --------------------------
+    // Insert a Person
+    // --------------------------
+    insertBtn.addEventListener("click", function () {
+        // Inside insertBtn event listener:
+        let personName = personInput.value.trim();
+        console.log("Before fetch - Person name:", personName);
+
+        if (!personName) {
+            alert("Please enter a valid name.");
+            return;
+        }
+
+        // Create the request body manually to inspect
+        const requestBody = new URLSearchParams({ 'element': personName });
+        console.log("Request payload:", requestBody.toString());
+
+        fetch('/insert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: requestBody
+        })
+        .then(response => response.json().then(data => {
+            console.log("Response from server:", data);
+            return { status: response.status, body: data };
+        }))
+        .then(({ status, body }) => {
+            if (status !== 200) {
+                alert(body.message);
+            } else {
+                // Show a Toastify notification with the inserted person's name
+                Toastify({
+                    text: `${personName} has been added to the queue`,
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#10B981",
+                    stopOnFocus: true
+                }).showToast();
+                addNotification('Added', `${personName} is inserted into the queue`);
+                loadQueue();
+                fetchAnalytics();
+                personInput.value = ""; // Clear input field after successful insertion
+            }
+        });
+    });
+    
+    // --------------------------
+    // Delete the First Person
+    // --------------------------
+    deleteBtn.addEventListener("click", function () {
+        fetch('/delete', { method: 'POST' })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            if (status !== 200) {
+                alert(body.message);
+            } else {
+                // Show a Toastify notification with the deleted person's name
+                Toastify({
+                    text: body.message,
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#EF4444",
+                    stopOnFocus: true
+                }).showToast();
+                addNotification('Removed', body.message);
+                loadQueue();
+                fetchAnalytics();
+            }
+        });
+    });
+    
+    // --------------------------
+    // Display and Close Queue Buttons
+    // --------------------------
+    displayBtn.addEventListener("click", function () {
+        showQueue();
+    });
+    
+    closeBtn.addEventListener("click", function () {
+        closeQueue();
+    });
+    
+    function showQueue() {
+        queueContainer.classList.remove("hidden");
+        loadQueue();
+    }
+    
+    function closeQueue() {
+        queueContainer.classList.add("hidden");
+    }
+    
+    // --------------------------
+    // Export PDF Functionality
+    // --------------------------
     if (exportBtn) {
         exportBtn.addEventListener("click", function() {
             console.log("Export button clicked");
@@ -234,21 +257,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    // Help Modal functionality
-    if (helpBtn && helpModal && closeHelpBtn) {
-        helpBtn.addEventListener("click", function() {
-            helpModal.classList.remove("hidden");
-        });
-        closeHelpBtn.addEventListener("click", function() {
-            helpModal.classList.add("hidden");
-        });
-        // Close modal when clicking outside the modal content
-        helpModal.addEventListener("click", function(e) {
-            if (e.target === helpModal) {
-                helpModal.classList.add("hidden");
-            }
-        });
-    }
+    // --------------------------
+    // Advanced features removed entirely.
+    // --------------------------
+    
+    // Help Button Feature: Create a help button and overlay with instructions.
+    const helpBtn = document.createElement('button');
+    helpBtn.id = "helpBtn";
+    helpBtn.className = "fixed bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow-lg z-50";
+    helpBtn.textContent = "Help";
+    document.body.appendChild(helpBtn);
+    
+    const helpOverlay = document.createElement('div');
+    helpOverlay.id = "helpOverlay";
+    helpOverlay.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden";
+    helpOverlay.innerHTML = `
+      <div class="bg-white p-8 rounded-lg max-w-lg mx-auto">
+        <h2 class="text-2xl font-bold mb-4">How to Use QueueMaster</h2>
+        <p class="mb-2">- Enter a person's name in the input field and click <strong>Insert</strong> to add them to the queue.</p>
+        <p class="mb-2">- Click <strong>Delete</strong> to serve and remove the first person in the queue.</p>
+        <p class="mb-2">- Click <strong>Display Queue</strong> to view the current queue.</p>
+        <p class="mb-2">- The <strong>Live Count</strong> shows the number of people currently waiting; analytics update automatically.</p>
+        <p class="mb-2">- Use <strong>Export PDF</strong> to download the analytics report.</p>
+        <button id="closeHelpBtn" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Close</button>
+      </div>
+    `;
+    document.body.appendChild(helpOverlay);
+    
+    helpBtn.addEventListener("click", function() {
+      helpOverlay.classList.remove("hidden");
+    });
+    
+    document.getElementById("closeHelpBtn").addEventListener("click", function() {
+      helpOverlay.classList.add("hidden");
+    });
     
     // Initial load system message
     addNotification('System', 'Queue system initialized');
