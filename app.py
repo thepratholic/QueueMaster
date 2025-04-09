@@ -15,12 +15,9 @@ from urllib.parse import quote_plus
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my-very-secret-key-123!'
 
-MONGODB_URI = os.environ.get('MONGODB_URI')
-if not MONGODB_URI:
-    username = quote_plus("chelaramanipratham350")
-    password = quote_plus("Apple@2025()")
-    MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
-
+username = quote_plus("chelaramanipratham350")
+password = quote_plus("Apple@2025()")
+MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
 client = MongoClient(MONGODB_URI)
 mongo_db = client['queuemaster']
 
