@@ -8,9 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Configure Tailwind to support dark mode
-    tailwind.config = {
-      darkMode: 'class',
-    }
+    tailwind.config = { darkMode: 'class' }
   </script>
 
   <!-- Google Fonts -->
@@ -19,15 +17,14 @@
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Socket.IO Client -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+  <!-- (Socket.IO Client removed) -->
 
   <!-- Toastify JS for notifications -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
 
-  <!-- Optionally link your own styles.css if needed -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> 
+  <!-- Your custom stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
   <style>
     body {
@@ -48,11 +45,10 @@
       <p class="text-sm text-gray-300">{{ _('Modern Queue Management System') }}</p>
     </div>
     <div class="flex items-center space-x-4">
-      <!-- Help Button -->
+      <!-- Help Button (positioned next to dark mode toggle) -->
       <button id="helpBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded">
         {{ _('Help') }}
       </button>
-
       <!-- Dark Mode Toggle -->
       <label class="relative inline-flex items-center cursor-pointer">
         <input type="checkbox" id="darkModeToggle" class="sr-only peer">
@@ -64,12 +60,10 @@
                     after:h-5 after:w-5 after:transition-all"></div>
         <span class="ml-2 text-sm font-medium text-gray-100">{{ _('Dark Mode') }}</span>
       </label>
-
       <!-- Profile Link -->
       <a href="{{ url_for('profile') }}" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded">
         {{ _('Profile') }}
       </a>
-
       <!-- Logout Button -->
       <a href="{{ url_for('logout') }}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
         {{ _('Logout') }}
@@ -86,7 +80,6 @@
 
         <!-- Insert / Delete Row -->
         <div class="flex flex-col sm:flex-row gap-4 mb-4">
-          <!-- Added name="element" attribute below -->
           <input type="text" id="personInput" name="element" placeholder="{{ _('Enter person\'s name') }}"
             class="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800 dark:text-gray-100 dark:bg-gray-700">
           <button id="insertBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
@@ -134,8 +127,7 @@
         </div>
 
         <!-- Notifications Area -->
-        <div id="notificationsArea"
-          class="mt-4 h-32 overflow-y-auto bg-gray-100 dark:bg-gray-900 rounded p-2 border border-gray-300 dark:border-gray-700">
+        <div id="notificationsArea" class="mt-4 h-32 overflow-y-auto bg-gray-100 dark:bg-gray-900 rounded p-2 border border-gray-300 dark:border-gray-700">
           <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">{{ _('Recent Activity') }}</h3>
           <div id="notificationsList" class="space-y-2 text-sm">
             <!-- Notification items inserted here -->
@@ -155,8 +147,7 @@
           </p>
         </div>
         <div class="mt-6 text-center">
-          <button id="exportBtn"
-            class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded inline-flex items-center">
+          <button id="exportBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded inline-flex items-center">
             <i class="fas fa-file-pdf mr-2"></i> {{ _('Export PDF') }}
           </button>
         </div>
@@ -164,48 +155,39 @@
     </div>
   </main>
 
-  <!-- Dark Gradient Footer (Full Width) -->
-  <footer class="bg-gray-800 text-gray-200 py-4 text-center">
-    <div class="container mx-auto flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-6">
-      <p class="font-bold text-amber-600">© 2025 <span class="font-bold text-amber-600">Pratham Chelaramani</span>. All rights reserved.
-      </p>
-      <div class="flex space-x-4">
-        <a href="https://github.com/thepratholic" target="_blank" rel="noopener noreferrer"
-          class="font-bold text-amber-600">
-          GitHub
-        </a>
-        <a href="https://www.linkedin.com/in/thepratholic" target="_blank" rel="noopener noreferrer"
-          class="font-bold text-amber-600">
-          LinkedIn
-        </a>
-        <a href="mailto:chelaramanipratham@gmail.com" class="font-bold text-amber-600">
-          Email
-        </a>
-      </div>
-    </div>
-  </footer>
-
   <!-- Help Modal -->
-  <div id="helpModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 max-w-lg">
+  <div id="helpModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 max-w-lg mx-auto">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold">{{ _('Help') }}</h3>
+        <h3 class="text-2xl font-bold">{{ _('Help') }}</h3>
         <button id="closeHelpBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
       </div>
       <div class="text-gray-700 dark:text-gray-300">
-        <p>{{ _("Welcome to QueueMaster! Here are some instructions to help you get started:") }}</p>
+        <p>{{ _("Welcome to QueueMaster! Follow these instructions to use the application:") }}</p>
         <ul class="list-disc ml-6 mt-2">
-          <li>{{ _("To join the queue, enter your name in the input field and click 'Insert'.") }}</li>
-          <li>{{ _("To serve a customer, click 'Delete' to remove the first person in the queue.") }}</li>
+          <li>{{ _("Enter a person's name and click 'Insert' to add them to the queue.") }}</li>
+          <li>{{ _("Click 'Delete' to serve and remove the first person in the queue.") }}</li>
           <li>{{ _("Click 'Display Queue' to view the current queue; 'Close Queue' hides the list.") }}</li>
-          <li>{{ _("Analytics such as total served and average wait time update automatically.") }}</li>
-          <li>{{ _("By clicking on the Export PDF button, you can download the current Queue Status locally on your Machine.") }}</li>
+          <li>{{ _("Live Count and Analytics update automatically.") }}</li>
+          <li>{{ _("Click 'Export PDF' to download a report including each served customer's name with insertion and served timestamps.") }}</li>
         </ul>
       </div>
     </div>
   </div>
 
-  <!-- Link your main JS file last -->
+  <!-- Dark Gradient Footer -->
+  <footer class="bg-gray-800 text-gray-200 py-4 text-center">
+    <div class="container mx-auto flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-6">
+      <p class="font-bold text-amber-600">© 2025 <span class="font-bold text-amber-600">Pratham Chelaramani</span>. {{ _('All rights reserved.') }}</p>
+      <div class="flex space-x-4">
+        <a href="https://github.com/thepratholic" target="_blank" rel="noopener noreferrer" class="font-bold text-amber-600">GitHub</a>
+        <a href="https://www.linkedin.com/in/thepratholic" target="_blank" rel="noopener noreferrer" class="font-bold text-amber-600">LinkedIn</a>
+        <a href="mailto:chelaramanipratham@gmail.com" class="font-bold text-amber-600">Email</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Link your main JS file -->
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 

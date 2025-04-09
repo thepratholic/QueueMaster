@@ -1,5 +1,4 @@
 import os
-import random
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -10,24 +9,35 @@ from flask_babel import Babel, _
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from urllib.parse import quote_plus
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'my-very-secret-key-123!'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 # MongoDB connection
-username = quote_plus("chelaramanipratham350")
-password = quote_plus("Apple@2025()")
-MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
+MONGODB_URI = os.getenv('MONGODB_URI')
+if not MONGODB_URI:
+    # Fallback with warning
+    username = os.getenv('MONGO_USERNAME')
+    password = os.getenv('MONGO_PASSWORD')
+    if username and password:
+        username = quote_plus(username)
+        password = quote_plus(password)
+        MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
+    else:
+        raise ValueError("MongoDB credentials not found. Set MONGODB_URI or MONGO_USERNAME and MONGO_PASSWORD")
+
 client = MongoClient(MONGODB_URI)
 mongo_db = client['queuemaster']
 
 # Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'queuemaster7275@gmail.com'
-app.config['MAIL_PASSWORD'] = 'queuemaster@7275$'  # Use app password for Gmail
-app.config['MAIL_DEFAULT_SENDER'] = 'queuemaster7275@gmail.com'
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
 # Babel configuration for multi-language support
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
@@ -38,7 +48,7 @@ def get_locale():
 
 babel = Babel(app, locale_selector=get_locale)
 
-# Configure logging (no file logging so queuemaster.log is not created)
+# Configure logging (only to console; no file logging)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -164,11 +174,6 @@ def verify_reset_token(token, expiration=3600):
         return email
     except Exception:
         return None
-
-# ------------------------
-# Removed WebSocket Events and SocketIO Code
-# ------------------------
-# (All Socket.IO code has been removed; real-time updates are now handled by polling via HTTP)
 
 # ------------------------
 # Debug Routes (for admin use)
@@ -388,7 +393,6 @@ def index():
 def queue_insert():
     try:
         person_name = request.form['element']
-        # Debug log to verify the input received
         logger.info(f"Received name: '{person_name}'")
         if not person_name:
             logger.warning("Insert attempt with empty name")
@@ -410,10 +414,11 @@ def queue_insert():
         }
         
         result = mongo_db.queue.insert_one(new_entry)
+        inserted_doc = mongo_db.queue.find_one({'_id': result.inserted_id})
         logger.info(f"Inserted person '{person_name}' into the queue with ID: {result.inserted_id}")
         
         flash(f"{person_name} has been inserted into the queue", "success")
-        return jsonify({"message": f"Person inserted into the queue"})
+        return jsonify({"message": "Person inserted into the queue"})
     except Exception as e:
         logger.error(f"Error inserting person: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
@@ -444,7 +449,6 @@ def queue_delete():
         
         logger.info(f"Deleted (served) person '{person_name}' from the queue (ID: {entry['_id']})")
         flash(f"{person_name} has been served and removed from the queue", "info")
-        
         return jsonify({"message": f"Deleted: {person_name}"})
     except Exception as e:
         logger.error(f"Error deleting person: {str(e)}")
@@ -470,21 +474,12 @@ def analytics():
         total_served = len(served_entries)
         
         total_wait_time = 0
-        # Prepare a served_details list
         served_details = []
-        
         for entry in served_entries:
-            arrival_str = None
-            served_str = None
+            arrival_str = entry['arrival_time'].isoformat() if 'arrival_time' in entry else "N/A"
+            served_str = entry['served_time'].isoformat() if 'served_time' in entry else "N/A"
             
-            if 'arrival_time' in entry and entry['arrival_time']:
-                # Convert the datetime to a string (e.g., ISO format)
-                arrival_str = entry['arrival_time'].isoformat()
-            
-            if 'served_time' in entry and entry['served_time']:
-                served_str = entry['served_time'].isoformat()
-                
-                # Accumulate wait time
+            if 'served_time' in entry and entry['served_time'] and 'arrival_time' in entry and entry['arrival_time']:
                 wait_time = (entry['served_time'] - entry['arrival_time']).total_seconds()
                 total_wait_time += wait_time
             
@@ -500,16 +495,14 @@ def analytics():
         return jsonify({
             "total_served": total_served,
             "avg_wait_time": round(avg_wait_time, 2),
-            # Include served_details in the response
             "served_details": served_details
         })
     except Exception as e:
         logger.error(f"Error in analytics: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
-
 # ------------------------
-# NEW CODE FOR USER PROFILE
+# User Profile
 # ------------------------
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -547,6 +540,15 @@ def profile():
 
     return render_template('profile.html')
 
+# Root route handler for Vercel
+@app.route('/api/healthcheck')
+def healthcheck():
+    return jsonify({
+        "status": "ok", 
+        "message": "QueueMaster is running",
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
 if __name__ == '__main__':
-    logger.info("Starting QueueMaster application...")
+    # For local development only
     app.run(debug=True)

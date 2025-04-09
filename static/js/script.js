@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const liveCount = document.getElementById("liveCount");
     const notificationsList = document.getElementById("notificationsList");
     const exportBtn = document.getElementById("exportBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const helpModal = document.getElementById("helpModal");
+    const closeHelpBtn = document.getElementById("closeHelpBtn");
 
     // --------------------------
     // Notification Function
@@ -101,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
             nameSpan.textContent = entry.person_name;
             nameCell.appendChild(nameSpan);
 
+            // Add a badge if priority is not "normal"
             if (entry.priority && entry.priority.toLowerCase() !== "normal") {
                 let badge = document.createElement("span");
                 badge.className = "ml-2 inline-block text-xs px-2 py-1 rounded";
@@ -138,26 +142,26 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({ 'element': personName })
         })
-        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-        .then(({ status, body }) => {
-            console.log("Response status:", status, "Body:", body);
-            if (status !== 200) {
-                alert(body.message);
-            } else {
-                Toastify({
-                    text: `${personName} has been inserted into the queue`,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#10B981",
-                    stopOnFocus: true
-                }).showToast();
-                addNotification('Added', `${personName} has been inserted into the queue`);
-                loadQueue();
-                fetchAnalytics();
-            }
-            personInput.value = "";
-        });
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                console.log("Response status:", status, "Body:", body);
+                if (status !== 200) {
+                    alert(body.message);
+                } else {
+                    Toastify({
+                        text: `${personName} has been inserted into the queue`,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#10B981",
+                        stopOnFocus: true
+                    }).showToast();
+                    addNotification('Added', `${personName} has been inserted into the queue`);
+                    loadQueue();
+                    fetchAnalytics();
+                }
+                personInput.value = "";
+            });
     });
 
     // --------------------------
@@ -165,24 +169,24 @@ document.addEventListener("DOMContentLoaded", function () {
     // --------------------------
     deleteBtn.addEventListener("click", function () {
         fetch('/delete', { method: 'POST' })
-        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-        .then(({ status, body }) => {
-            if (status !== 200) {
-                alert(body.message);
-            } else {
-                Toastify({
-                    text: body.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#EF4444",
-                    stopOnFocus: true
-                }).showToast();
-                addNotification('Removed', body.message);
-                loadQueue();
-                fetchAnalytics();
-            }
-        });
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status !== 200) {
+                    alert(body.message);
+                } else {
+                    Toastify({
+                        text: body.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#EF4444",
+                        stopOnFocus: true
+                    }).showToast();
+                    addNotification('Removed', body.message);
+                    loadQueue();
+                    fetchAnalytics();
+                }
+            });
     });
 
     // --------------------------
@@ -206,10 +210,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // --------------------------
-    // Export PDF Functionality with enhanced logging and page break check
+    // Export PDF Functionality with page break handling
     // --------------------------
     if (exportBtn) {
-        exportBtn.addEventListener("click", function() {
+        exportBtn.addEventListener("click", function () {
             console.log("Export button clicked");
             fetch('/analytics')
                 .then(response => response.json())
@@ -223,15 +227,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     const pageHeight = doc.internal.pageSize.height;
-
-                    // Title
+                    
+                    // Title and Date
                     doc.setFontSize(20);
                     doc.text("QueueMaster Analytics Report", 105, 20, null, null, "center");
-
-                    // Date
                     doc.setFontSize(12);
                     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 30, null, null, "center");
-
+                    
                     // Basic Stats
                     doc.setFontSize(14);
                     doc.text("Queue Performance Metrics:", 20, 50);
@@ -239,13 +241,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     doc.text(`Total Customers Served: ${data.total_served}`, 30, 60);
                     doc.text(`Average Wait Time: ${data.avg_wait_time} seconds`, 30, 70);
                     doc.text(`Current Queue Length: ${liveCount.textContent} people`, 30, 80);
-
-                    // Served Customers List (if available)
+                    
+                    // Served Customers List
                     let yPos = 90;
                     doc.setFontSize(14);
                     doc.text("Served Customers:", 20, yPos);
                     yPos += 10;
-
+                    
                     if (data.served_details && data.served_details.length > 0) {
                         data.served_details.forEach((cust, index) => {
                             doc.setFontSize(12);
@@ -262,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         doc.setFontSize(12);
                         doc.text("No served entries found yet.", 30, yPos);
                     }
-
+                    
                     doc.save("QueueMaster-Analytics.pdf");
                 })
                 .catch(err => {
@@ -273,25 +275,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // --------------------------
-    // Help Button Feature
+    // Help Button Feature (if help modal exists in HTML)
     // --------------------------
-    // (Assumes you already have a Help modal defined in your HTML with IDs "helpBtn", "helpModal", and "closeHelpBtn")
-    const helpBtn = document.getElementById("helpBtn");
-    const helpModal = document.getElementById("helpModal"); // Your help modal container in HTML
-    const closeHelpBtn = document.getElementById("closeHelpBtn"); // Your close button in the help modal
-
     if (helpBtn && helpModal && closeHelpBtn) {
         helpBtn.addEventListener("click", function () {
             helpModal.classList.remove("hidden");
         });
-
         closeHelpBtn.addEventListener("click", function () {
             helpModal.classList.add("hidden");
         });
     }
 
     // --------------------------
-    // Initial load: refresh queue and analytics, then show a system notification
+    // Initial load
     // --------------------------
     loadQueue();
     fetchAnalytics();
