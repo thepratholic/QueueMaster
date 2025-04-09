@@ -24,13 +24,13 @@ A built-in help modal provides new users with instructions on how to use the app
 
 ## Technologies Used
 **Backend**:
-Python, Flask, Flask-Login, Flask-Mail, Flask-SocketIO, Flask-Babel<br>
+Python, Flask, Flask-Login, Flask-Mail, Flask-Babel<br>
 
 **Database**:
-SQLite (default for development) and PostgreSQL (for production, configurable via environment variable)<br>
+SQLite (default for development) and MongoDB (for production, configurable via environment variable)<br>
 
 **Frontend**:
-HTML, Tailwind CSS, Vanilla JavaScript, jsPDF, Toastify.js, Socket.IO Client<br>
+HTML, Tailwind CSS, Vanilla JavaScript, jsPDF<br>
 
 **Others**:
 psycopg2 (for PostgreSQL connection pooling)<br>
