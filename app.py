@@ -1,4 +1,3 @@
-
 import os
 import random
 from datetime import datetime
@@ -15,6 +14,7 @@ from urllib.parse import quote_plus
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my-very-secret-key-123!'
 
+# MongoDB connection
 username = quote_plus("chelaramanipratham350")
 password = quote_plus("Apple@2025()")
 MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
@@ -38,7 +38,7 @@ def get_locale():
 
 babel = Babel(app, locale_selector=get_locale)
 
-# Configure logging: Remove file logging so queuemaster.log is not created.
+# Configure logging (no file logging so queuemaster.log is not created)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -49,8 +49,6 @@ logger = logging.getLogger('queue_app')
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 mail = Mail(app)
-# Removed SocketIO setup
-# Instead of socketio, we'll run the app using app.run()
 
 # Global variable for pause status (kept for potential future use)
 paused = False
@@ -170,7 +168,7 @@ def verify_reset_token(token, expiration=3600):
 # ------------------------
 # Removed WebSocket Events and SocketIO Code
 # ------------------------
-# (All Socket.IO code has been removed; real-time updates will now be handled via HTTP polling)
+# (All Socket.IO code has been removed; real-time updates are now handled by polling via HTTP)
 
 # ------------------------
 # Debug Routes (for admin use)
@@ -390,14 +388,11 @@ def index():
 def queue_insert():
     try:
         person_name = request.form['element']
-        print(f"DEBUG - Original received name: '{person_name}'")  # Add this debug line
-        
+        # Debug log to verify the input received
+        logger.info(f"Received name: '{person_name}'")
         if not person_name:
             logger.warning("Insert attempt with empty name")
             return jsonify({"message": "Invalid name"}), 400
-        
-        # Add more detailed logging
-        print(f"DEBUG - After validation, before DB: '{person_name}'")
         
         max_order_result = mongo_db.queue.find_one(
             {'status': 'waiting'},
@@ -414,18 +409,11 @@ def queue_insert():
             'arrival_time': datetime.utcnow()
         }
         
-        # Print the entry before inserting
-        print(f"DEBUG - Entry being inserted: {new_entry}")
-        
         result = mongo_db.queue.insert_one(new_entry)
-        
-        # Check what was actually inserted
-        inserted_doc = mongo_db.queue.find_one({'_id': result.inserted_id})
-        print(f"DEBUG - Actually inserted: {inserted_doc}")
-        
         logger.info(f"Inserted person '{person_name}' into the queue with ID: {result.inserted_id}")
         
-        return jsonify({"message": "Person inserted into the queue"})
+        flash(f"{person_name} has been inserted into the queue", "success")
+        return jsonify({"message": f"Person inserted into the queue"})
     except Exception as e:
         logger.error(f"Error inserting person: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
@@ -444,7 +432,6 @@ def queue_delete():
             return jsonify({"message": "Queue Underflow"}), 400
         
         person_name = entry['person_name']
-        
         mongo_db.queue.update_one(
             {'_id': entry['_id']},
             {
@@ -456,8 +443,7 @@ def queue_delete():
         )
         
         logger.info(f"Deleted (served) person '{person_name}' from the queue (ID: {entry['_id']})")
-        
-        flash(f"{person_name} has been served and removed from the queue", 'info')
+        flash(f"{person_name} has been served and removed from the queue", "info")
         
         return jsonify({"message": f"Deleted: {person_name}"})
     except Exception as e:
@@ -484,17 +470,38 @@ def analytics():
         total_served = len(served_entries)
         
         total_wait_time = 0
+        # Prepare a served_details list
+        served_details = []
+        
         for entry in served_entries:
-            if 'served_time' in entry and 'arrival_time' in entry:
+            arrival_str = None
+            served_str = None
+            
+            if 'arrival_time' in entry and entry['arrival_time']:
+                # Convert the datetime to a string (e.g., ISO format)
+                arrival_str = entry['arrival_time'].isoformat()
+            
+            if 'served_time' in entry and entry['served_time']:
+                served_str = entry['served_time'].isoformat()
+                
+                # Accumulate wait time
                 wait_time = (entry['served_time'] - entry['arrival_time']).total_seconds()
                 total_wait_time += wait_time
-                
+            
+            served_details.append({
+                "person_name": entry['person_name'],
+                "arrival_time": arrival_str,
+                "served_time": served_str
+            })
+        
         avg_wait_time = total_wait_time / total_served if total_served else 0
         
         logger.info(f"Analytics accessed: {total_served} served entries")
         return jsonify({
             "total_served": total_served,
-            "avg_wait_time": round(avg_wait_time, 2)
+            "avg_wait_time": round(avg_wait_time, 2),
+            # Include served_details in the response
+            "served_details": served_details
         })
     except Exception as e:
         logger.error(f"Error in analytics: {str(e)}")

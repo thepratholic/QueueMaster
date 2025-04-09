@@ -29,15 +29,15 @@ document.addEventListener("DOMContentLoaded", function () {
         notificationItem.innerHTML = `
             <span class="inline-block w-16 text-xs text-gray-500 dark:text-gray-400">${timestamp}</span>
             <span class="font-medium ${typeClass} mr-1">${type}:</span>
-            <span class="text-gray-700 dark:text-gray-300">${message}</span>`;
-            
+            <span class="text-gray-700 dark:text-gray-300">${message}</span>
+        `;
         notificationsList.prepend(notificationItem);
         const items = notificationsList.children;
         if (items.length > 20) {
             notificationsList.removeChild(items[items.length - 1]);
         }
     }
-    
+
     // --------------------------
     // Dark Mode Setup
     // --------------------------
@@ -58,54 +58,49 @@ document.addEventListener("DOMContentLoaded", function () {
             localStorage.setItem("darkMode", "disabled");
         }
     });
-    
+
     // --------------------------
-    // Refresh Functions: Queue and Analytics
+    // Refresh Functions: Queue and Analytics via HTTP polling
     // --------------------------
     function loadQueue() {
-        console.log("Fetching queue data...");
         fetch('/display')
-        .then(response => response.json())
-        .then(data => {
-            console.log("Raw queue data received:", JSON.stringify(data));
-            updateQueueDisplay(data.queue);
-            // Update live count from the length of the queue data:
-            liveCount.textContent = data.queue.length;
-        })
-        .catch(error => console.error("Error loading queue:", error));
+            .then(response => response.json())
+            .then(data => {
+                updateQueueDisplay(data.queue);
+                liveCount.textContent = data.queue.length;
+            })
+            .catch(error => console.error("Error loading queue:", error));
     }
-    
+
     function fetchAnalytics() {
         fetch('/analytics')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('totalServed').textContent = data.total_served;
-            document.getElementById('avgWaitTime').textContent = data.avg_wait_time;
-        })
-        .catch(err => console.error("Error fetching analytics:", err));
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalServed').textContent = data.total_served;
+                document.getElementById('avgWaitTime').textContent = data.avg_wait_time;
+            })
+            .catch(err => console.error("Error fetching analytics:", err));
     }
-    
+
     // --------------------------
     // Update Queue Display
     // --------------------------
     function updateQueueDisplay(queueData) {
         queueTableBody.innerHTML = "";
-        console.log("Updating queue display with data:", queueData);
         queueData.forEach((entry, index) => {
             let row = document.createElement("tr");
             row.className = "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100";
-            
+
             let indexCell = document.createElement("td");
             indexCell.textContent = index + 1;
             indexCell.className = "p-2 border";
-            
+
             let nameCell = document.createElement("td");
             nameCell.className = "p-2 border flex items-center";
             let nameSpan = document.createElement("span");
             nameSpan.textContent = entry.person_name;
             nameCell.appendChild(nameSpan);
-            
-            // Add a badge if priority is not "normal"
+
             if (entry.priority && entry.priority.toLowerCase() !== "normal") {
                 let badge = document.createElement("span");
                 badge.className = "ml-2 inline-block text-xs px-2 py-1 rounded";
@@ -121,60 +116,50 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 nameCell.appendChild(badge);
             }
-            
+
             row.appendChild(indexCell);
             row.appendChild(nameCell);
             queueTableBody.appendChild(row);
         });
     }
-    
+
     // --------------------------
     // Insert a Person
     // --------------------------
     insertBtn.addEventListener("click", function () {
-        // Inside insertBtn event listener:
         let personName = personInput.value.trim();
-        console.log("Before fetch - Person name:", personName);
-
+        console.log("Attempting to insert:", personName);
         if (!personName) {
             alert("Please enter a valid name.");
             return;
         }
-
-        // Create the request body manually to inspect
-        const requestBody = new URLSearchParams({ 'element': personName });
-        console.log("Request payload:", requestBody.toString());
-
         fetch('/insert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: requestBody
+            body: new URLSearchParams({ 'element': personName })
         })
-        .then(response => response.json().then(data => {
-            console.log("Response from server:", data);
-            return { status: response.status, body: data };
-        }))
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
         .then(({ status, body }) => {
+            console.log("Response status:", status, "Body:", body);
             if (status !== 200) {
                 alert(body.message);
             } else {
-                // Show a Toastify notification with the inserted person's name
                 Toastify({
-                    text: `${personName} has been added to the queue`,
+                    text: `${personName} has been inserted into the queue`,
                     duration: 3000,
                     gravity: "top",
                     position: "right",
                     backgroundColor: "#10B981",
                     stopOnFocus: true
                 }).showToast();
-                addNotification('Added', `${personName} is inserted into the queue`);
+                addNotification('Added', `${personName} has been inserted into the queue`);
                 loadQueue();
                 fetchAnalytics();
-                personInput.value = ""; // Clear input field after successful insertion
             }
+            personInput.value = "";
         });
     });
-     
+
     // --------------------------
     // Delete the First Person
     // --------------------------
@@ -185,7 +170,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (status !== 200) {
                 alert(body.message);
             } else {
-                // Show a Toastify notification with the deleted person's name
                 Toastify({
                     text: body.message,
                     duration: 3000,
@@ -200,29 +184,29 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-    
+
     // --------------------------
     // Display and Close Queue Buttons
     // --------------------------
     displayBtn.addEventListener("click", function () {
         showQueue();
     });
-    
+
     closeBtn.addEventListener("click", function () {
         closeQueue();
     });
-    
+
     function showQueue() {
         queueContainer.classList.remove("hidden");
         loadQueue();
     }
-    
+
     function closeQueue() {
         queueContainer.classList.add("hidden");
     }
-    
+
     // --------------------------
-    // Export PDF Functionality
+    // Export PDF Functionality with enhanced logging and page break check
     // --------------------------
     if (exportBtn) {
         exportBtn.addEventListener("click", function() {
@@ -238,16 +222,47 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
+                    const pageHeight = doc.internal.pageSize.height;
+
+                    // Title
                     doc.setFontSize(20);
                     doc.text("QueueMaster Analytics Report", 105, 20, null, null, "center");
+
+                    // Date
                     doc.setFontSize(12);
                     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 30, null, null, "center");
+
+                    // Basic Stats
                     doc.setFontSize(14);
                     doc.text("Queue Performance Metrics:", 20, 50);
                     doc.setFontSize(12);
                     doc.text(`Total Customers Served: ${data.total_served}`, 30, 60);
                     doc.text(`Average Wait Time: ${data.avg_wait_time} seconds`, 30, 70);
                     doc.text(`Current Queue Length: ${liveCount.textContent} people`, 30, 80);
+
+                    // Served Customers List (if available)
+                    let yPos = 90;
+                    doc.setFontSize(14);
+                    doc.text("Served Customers:", 20, yPos);
+                    yPos += 10;
+
+                    if (data.served_details && data.served_details.length > 0) {
+                        data.served_details.forEach((cust, index) => {
+                            doc.setFontSize(12);
+                            if (yPos >= pageHeight - 20) {
+                                doc.addPage();
+                                yPos = 20;
+                            }
+                            doc.text(`${index + 1}. Name: ${cust.person_name || "Unknown"}`, 30, yPos);
+                            yPos += 6;
+                            doc.text(`   Inserted: ${cust.arrival_time || "N/A"}, Served: ${cust.served_time || "N/A"}`, 30, yPos);
+                            yPos += 10;
+                        });
+                    } else {
+                        doc.setFontSize(12);
+                        doc.text("No served entries found yet.", 30, yPos);
+                    }
+
                     doc.save("QueueMaster-Analytics.pdf");
                 })
                 .catch(err => {
@@ -256,42 +271,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
         });
     }
-    
+
     // --------------------------
-    // Advanced features removed entirely.
+    // Help Button Feature
     // --------------------------
-    
-    // Help Button Feature: Create a help button and overlay with instructions.
-    const helpBtn = document.createElement('button');
-    helpBtn.id = "helpBtn";
-    helpBtn.className = "fixed bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow-lg z-50";
-    helpBtn.textContent = "Help";
-    document.body.appendChild(helpBtn);
-    
-    const helpOverlay = document.createElement('div');
-    helpOverlay.id = "helpOverlay";
-    helpOverlay.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden";
-    helpOverlay.innerHTML = `
-      <div class="bg-white p-8 rounded-lg max-w-lg mx-auto">
-        <h2 class="text-2xl font-bold mb-4">How to Use QueueMaster</h2>
-        <p class="mb-2">- Enter a person's name in the input field and click <strong>Insert</strong> to add them to the queue.</p>
-        <p class="mb-2">- Click <strong>Delete</strong> to serve and remove the first person in the queue.</p>
-        <p class="mb-2">- Click <strong>Display Queue</strong> to view the current queue.</p>
-        <p class="mb-2">- The <strong>Live Count</strong> shows the number of people currently waiting; analytics update automatically.</p>
-        <p class="mb-2">- Use <strong>Export PDF</strong> to download the analytics report.</p>
-        <button id="closeHelpBtn" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Close</button>
-      </div>
-    `;
-    document.body.appendChild(helpOverlay);
-    
-    helpBtn.addEventListener("click", function() {
-      helpOverlay.classList.remove("hidden");
-    });
-    
-    document.getElementById("closeHelpBtn").addEventListener("click", function() {
-      helpOverlay.classList.add("hidden");
-    });
-    
-    // Initial load system message
+    // (Assumes you already have a Help modal defined in your HTML with IDs "helpBtn", "helpModal", and "closeHelpBtn")
+    const helpBtn = document.getElementById("helpBtn");
+    const helpModal = document.getElementById("helpModal"); // Your help modal container in HTML
+    const closeHelpBtn = document.getElementById("closeHelpBtn"); // Your close button in the help modal
+
+    if (helpBtn && helpModal && closeHelpBtn) {
+        helpBtn.addEventListener("click", function () {
+            helpModal.classList.remove("hidden");
+        });
+
+        closeHelpBtn.addEventListener("click", function () {
+            helpModal.classList.add("hidden");
+        });
+    }
+
+    // --------------------------
+    // Initial load: refresh queue and analytics, then show a system notification
+    // --------------------------
+    loadQueue();
+    fetchAnalytics();
     addNotification('System', 'Queue system initialized');
 });
