@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-    
+     
     // --------------------------
     // Delete the First Person
     // --------------------------
