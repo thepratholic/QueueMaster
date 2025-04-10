@@ -1,350 +1,103 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
 
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    text-align: center;
-    transition: background 0.5s ease, color 0.5s ease;
-  }
-  
-  body.dark-mode {
-    background-color: #121212;
-    color: #ffffff;
-  }
-  
-  /* Dark Mode Toggle Container */
-  .toggle-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 20px;
-    position: relative;
-    display: inline-block;
-  }
-  
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 30px;
-    margin: 0 10px;
-  }
-  
-  .switch input {
+/* Modern theme styles for QueueMaster */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
     opacity: 0;
-    width: 0;
-    height: 0;
   }
-  
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #6c6c6c;
-    transition: 0.4s;
-    border-radius: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  }
-  
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 24px;
-    width: 24px;
-    left: 3px;
-    bottom: 3px;
-    background: white;
-    transition: 0.4s;
-    border-radius: 50%;
-  }
-  
-  input:checked + .slider {
-    background-color: #2c3e50;
-  }
-  
-  input:checked + .slider:before {
-    transform: translateX(30px);
-  }
-  
-  /* Main Wrapper to contain everything */
-  .main-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  /* Header Section */
-  .header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .header-left h1 {
-    margin: 0;
-    font-size: 2rem;
-  }
-  
-  .header-left p {
-    margin: 0;
-    font-size: 0.9rem;
-    opacity: 0.7;
-  }
-  
-  .header-right .logout-link {
-    text-decoration: none;
-    background: #3498db;
-    color: #fff;
-    padding: 10px 15px;
-    border-radius: 6px;
-    transition: background 0.3s ease;
-  }
-  
-  .header-right .logout-link:hover {
-    background: #2980b9;
-  }
-  
-  .dark-mode .header-right .logout-link {
-    background: #ff9800;
-  }
-  
-  .dark-mode .header-right .logout-link:hover {
-    background: #e68900;
-  }
-  
-  /* Grid Layout for Main Content */
-  .content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Two columns */
-    gap: 30px;
-  }
-  
-  /* Queue Management Section */
-  .queue-management {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    padding: 20px;
-    transition: background 0.5s ease;
-  }
-  
-  .dark-mode .queue-management {
-    background: #1e1e1e;
-  }
-  
-  .queue-management h2 {
-    margin-top: 0;
-  }
-  
-  .queue-interface {
-    margin-bottom: 20px;
-  }
-  
-  .queue-interface input {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    margin-right: 5px;
-    outline: none;
-  }
-  
-  .action-btn {
-    background: #3498db;
-    border: none;
-    padding: 10px 15px;
-    margin: 5px;
-    border-radius: 5px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  .action-btn:hover {
-    background: #2980b9;
-  }
-  
-  .dark-mode .action-btn {
-    background: #ff9800;
-  }
-  
-  .dark-mode .action-btn:hover {
-    background: #e68900;
-  }
-  
-  /* Queue Table */
-  .queue-display {
-    margin-top: 20px;
-  }
-  
-  /* Table styling (same as before) */
-  .styled-table {
-    border-collapse: collapse;
-    margin: 0 auto;
-    font-size: 1em;
-    font-family: 'Poppins', sans-serif;
-    min-width: 400px;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  }
-  
-  .styled-table thead tr {
-    background-color: #3498db;
-    color: #ffffff;
-    text-align: center;
-    font-weight: bold;
-  }
-  
-  .styled-table th,
-  .styled-table td {
-    padding: 12px 15px;
-    text-align: center;
-  }
-  
-  .styled-table tbody tr {
-    background-color: #f3f3f3;
-    border-bottom: 1px solid #dddddd;
-  }
-  
-  .styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #3498db;
-  }
-  
-  /* Dark mode table override */
-  .dark-mode .styled-table tbody tr {
-    background-color: #1e1e1e;
-    border-bottom: 1px solid #444;
-  }
-  
-  /* Analytics Section */
-  .analytics {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    padding: 20px;
-    transition: background 0.5s ease;
-  }
-  
-  .dark-mode .analytics {
-    background: #1e1e1e;
-  }
-  
-  .analytics h2 {
-    margin-top: 0;
-  }
-  
-  .analytics-data p {
-    margin: 10px 0;
-  }
-  
-  /* Export Button */
-  .export-container {
-    margin-top: 20px;
-    text-align: center;
-  }
-  
-  .export-button {
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease-in-out;
-  }
-  
-  .export-button i {
-    font-size: 18px;
-  }
-  
-  .export-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, #23395d, #1e3c72);
-  }
-  
-  .export-button:active {
-    transform: scale(0.98);
-  }
-  
-  /* Tooltip for Dark Mode Toggle */
-  .tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out, transform 0.2s ease-in-out;
-    transform: translateX(-50%) translateY(5px);
-    pointer-events: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    top: 40px;
-    left: 50%;
-  }
-  
-  .toggle-container:hover .tooltip {
+  to {
+    transform: translateX(0);
     opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
   }
-  
-  /* Footer */
-  #footer {
-    background: linear-gradient(to right, #111, #333);
-    color: #fff;
-    text-align: center;
-    padding: 15px 20px;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-    box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.5);
-    width: 100%;
-  }
-  
-  #footer p {
-    margin: 0;
-    opacity: 0.8;
-  }
-  
-  #footer .brand {
-    font-weight: 600;
-    color: #FFD700;
-  }
-  
-  /* Example: Add near the bottom of your styles.css */
-.hidden {
-  display: none !important;
 }
 
-/* Make sure html/body take full height */
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* The .wrapper is a flex container filling the viewport */
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* 100% of the browser height */
+/* Dark mode transitions */
+.dark {
+  color-scheme: dark;
 }
 
-/* .content expands to fill leftover space, pushing the footer down */
-.content {
-  flex: 1;
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Notifications */
+.notification {
+  animation: slideIn 0.3s ease-out;
+  max-width: 300px;
+}
+
+/* Table Styles */
+.queue-table-row {
+  transition: all 0.2s ease;
+}
+
+.queue-table-row:hover {
+  background-color: #f8fafc;
+}
+
+.dark .queue-table-row:hover {
+  background-color: #1e293b;
+}
+
+/* Form Elements */
+input:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.dark input:focus {
+  outline-color: #818cf8;
+}
+
+/* Button Hover Effects */
+button {
+  transform: translateY(0);
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Loading Animation */
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }
