@@ -1,250 +1,140 @@
 import os
+import random
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 import logging
 from flask_babel import Babel, _
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-from urllib.parse import quote_plus
-from dotenv import load_dotenv
-load_dotenv()
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
-# MongoDB connection
-MONGODB_URI = os.getenv('MONGODB_URI')
-if not MONGODB_URI:
-    # Fallback with warning
-    username = os.getenv('MONGO_USERNAME')
-    password = os.getenv('MONGO_PASSWORD')
-    if username and password:
-        username = quote_plus(username)
-        password = quote_plus(password)
-        MONGODB_URI = f"mongodb+srv://{username}:{password}@queuemaster-cluster.uyawvvr.mongodb.net/queuemaster?retryWrites=true&w=majority"
-    else:
-        raise ValueError("MongoDB credentials not found. Set MONGODB_URI or MONGO_USERNAME and MONGO_PASSWORD")
+app.config['SECRET_KEY'] = 'my-very-secret-key-123!'
 
-client = MongoClient(MONGODB_URI)
-mongo_db = client['queuemaster']
+# PostgreSQL configuration using SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Apple%402019%28%29@localhost:5432/queuemaster_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Email configuration
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+# Email configuration for smtplib
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'queuemaster7275@gmail.com'
+EMAIL_HOST_PASSWORD = 'queuemaster@7275$'
+EMAIL_USE_TLS = True
 
 # Babel configuration for multi-language support
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 app.config['BABEL_SUPPORTED_LOCALES'] = ['en', 'es', 'fr']
+babel = Babel(app)
 
+@babel.localeselector
 def get_locale():
     return request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
 
-babel = Babel(app, locale_selector=get_locale)
-
-# Configure logging (only to console; no file logging)
+# Configure logging (console logging only)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('queue_app')
 
-# Flask-Login and Mail setup
+# Set up Flask-Login
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-mail = Mail(app)
 
 # Global variable for pause status (kept for potential future use)
 paused = False
 
 # ------------------------
-# MongoDB User Model
+# Database Models using SQLAlchemy
 # ------------------------
-class User(UserMixin):
-    def __init__(self, user_data):
-        self.user_data = user_data
-        
-    def get_id(self):
-        return str(self.user_data.get('_id'))
-        
-    @property
-    def id(self):
-        return str(self.user_data.get('_id'))
-        
-    @property
-    def username(self):
-        return self.user_data.get('username')
-        
-    @username.setter
-    def username(self, value):
-        self.user_data['username'] = value
-        
-    @property
-    def email(self):
-        return self.user_data.get('email')
-        
-    @email.setter
-    def email(self, value):
-        self.user_data['email'] = value
-        
-    @property
-    def mobile(self):
-        return self.user_data.get('mobile')
-        
-    @mobile.setter
-    def mobile(self, value):
-        self.user_data['mobile'] = value
-        
-    @property
-    def password(self):
-        return self.user_data.get('password')
-        
-    @password.setter
-    def password(self, value):
-        self.user_data['password'] = value
-        
-    @property
-    def is_verified(self):
-        return self.user_data.get('is_verified', False)
-    
-    @property
-    def otp(self):
-        return self.user_data.get('otp')
+db = SQLAlchemy(app)
+
+# User model - using only existing database columns
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    mobile = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    is_verified = db.Column(db.Boolean, default=False)
+    otp = db.Column(db.String(6), nullable=True)
+    # Note: otp_created_at is removed as it doesn't exist in the database
+    # Relationship to queue entries
+    queue_entries = db.relationship('QueueEntry', backref='user', lazy=True)
+
+# Queue Entry model
+class QueueEntry(db.Model):
+    __tablename__ = 'queue_entries'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    person_name = db.Column(db.String(100), nullable=False)
+    arrival_time = db.Column(db.DateTime, default=datetime.utcnow)
+    served_time = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='waiting')  # waiting, served, cancelled
+    priority = db.Column(db.String(20), default='normal')
+    category = db.Column(db.String(50), default='general')
+    order_index = db.Column(db.Integer, default=0)
 
 # ------------------------
 # User Loader
 # ------------------------
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = mongo_db.users.find_one({'_id': ObjectId(user_id)})
-    if user_data:
-        return User(user_data)
-    return None
-
-# ------------------------
-# Database Initialization
-# ------------------------
-@app.before_request
-def initialize_db():
-    if not hasattr(app, 'db_initialized'):
-        try:
-            logger.info("Checking database initialization...")
-            # Create indexes for faster queries
-            mongo_db.users.create_index('username', unique=True)
-            mongo_db.users.create_index('email', unique=True)
-            mongo_db.users.create_index('mobile', unique=True)
-            
-            # Check if admin user exists, if not create one
-            admin = mongo_db.users.find_one({'username': 'admin'})
-            if not admin:
-                logger.info("Creating admin user...")
-                admin_user = {
-                    'username': 'admin',
-                    'email': 'admin@example.com',
-                    'mobile': '+10000000000',
-                    'password': 'admin',  # In production, use password hashing
-                    'is_verified': True,
-                    'created_at': datetime.utcnow()
-                }
-                mongo_db.users.insert_one(admin_user)
-                logger.info("Admin user created successfully")
-            
-            app.db_initialized = True
-            logger.info("Database initialization complete")
-        except Exception as e:
-            logger.error(f"Error initializing database: {str(e)}")
-
-# ------------------------
-# Helper Functions for Password Reset
-# ------------------------
-def generate_reset_token(email):
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    return serializer.dumps(email, salt='password-reset-salt')
-
-def verify_reset_token(token, expiration=3600):
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
-        email = serializer.loads(token, salt='password-reset-salt', max_age=expiration)
-        return email
-    except Exception:
+        return User.query.get(int(user_id))
+    except Exception as e:
+        logger.error("Error loading user: " + str(e))
         return None
 
 # ------------------------
-# Debug Routes (for admin use)
+# Email Helper Functions
 # ------------------------
-@app.route('/debug/users')
-@login_required
-def debug_users():
-    if not current_user.username == 'admin':
-        logger.warning(f"Unauthorized access to debug/users by {current_user.username}")
-        return jsonify({"message": "Not authorized"}), 403
-    
-    users = list(mongo_db.users.find({}, {'password': 0}))  # Exclude password
-    user_list = [{
-        "id": str(user['_id']),
-        "username": user['username'],
-        "email": user['email'],
-        "mobile": user['mobile'],
-        "is_verified": user.get('is_verified', False)
-    } for user in users]
-    
-    logger.info(f"Debug users accessed: {len(user_list)} users found")
-    return jsonify(user_list)
-
-@app.route('/debug/queue')
-@login_required
-def debug_queue():
-    if not current_user.username == 'admin':
-        logger.warning(f"Unauthorized access to debug/queue by {current_user.username}")
-        return jsonify({"message": "Not authorized"}), 403
-    
-    entries = list(mongo_db.queue.find({}))
-    entry_list = [{
-        "id": str(entry['_id']),
-        "person_name": entry['person_name'],
-        "status": entry['status'],
-        "priority": entry['priority'],
-        "category": entry['category'],
-        "order_index": entry['order_index'],
-        "arrival_time": entry['arrival_time'].isoformat() if 'arrival_time' in entry else None,
-        "served_time": entry['served_time'].isoformat() if 'served_time' in entry else None
-    } for entry in entries]
-    
-    logger.info(f"Debug queue accessed: {len(entry_list)} entries found")
-    return jsonify(entry_list)
-
-@app.route('/debug/db-info')
-@login_required
-def debug_db_info():
-    if not current_user.username == 'admin':
-        logger.warning(f"Unauthorized access to debug/db-info by {current_user.username}")
-        return jsonify({"message": "Not authorized"}), 403
-    
+def send_email(to_email, subject, body):
+    """Send an email using smtplib"""
     try:
-        collections = mongo_db.list_collection_names()
-        collection_stats = {}
-        for collection in collections:
-            count = mongo_db[collection].count_documents({})
-            collection_stats[collection] = count
-            
-        info = {
-            "database_type": "MongoDB",
-            "database_name": mongo_db.name,
-            "collections": collections,
-            "collection_stats": collection_stats
-        }
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_HOST_USER
+        msg['To'] = to_email
+        msg['Subject'] = subject
         
-        logger.info(f"Database info accessed: {len(collections)} collections found")
-        return jsonify(info)
+        msg.attach(MIMEText(body, 'plain'))
+        
+        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        if EMAIL_USE_TLS:
+            server.starttls()
+        server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        logger.info(f"Email sent successfully to {to_email}")
+        return True
     except Exception as e:
-        logger.error(f"Error getting database info: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join(random.choices('0123456789', k=6))
+
+def send_otp_email(user):
+    """Generate OTP, save it to user record, and send email"""
+    otp = generate_otp()
+    user.otp = otp
+    db.session.commit()
+    
+    # Store OTP creation time in session instead of database
+    session['otp_created_at'] = datetime.utcnow().timestamp()
+    
+    subject = _("Your Password Reset OTP")
+    body = _(f"Hello {user.username},\n\nYour OTP for password reset is: {otp}\n\nThis OTP is valid for 10 minutes.\n\nIf you did not request this, please ignore this email.")
+    
+    return send_email(user.email, subject, body)
 
 # ------------------------
 # Routes for Authentication
@@ -252,74 +142,54 @@ def debug_db_info():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username').strip()
-        email = request.form.get('email').strip()
-        mobile = request.form.get('mobile').strip()
-        password = request.form.get('password').strip()
-        
-        existing_user = mongo_db.users.find_one({
-            '$or': [
-                {'username': username},
-                {'email': email},
-                {'mobile': mobile}
-            ]
-        })
-        
-        if existing_user:
-            flash(_('Username, Email or Mobile already exists'), 'danger')
-            logger.warning(f"Signup failed: Email {email} or username {username} already exists")
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        mobile = request.form.get('mobile', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not username or not email or not mobile or not password:
+            flash(_('Please fill in all the fields.'), 'danger')
             return redirect(url_for('signup'))
-        
+
+        # Check if user exists
+        if User.query.filter((User.username == username) | (User.email == email) | (User.mobile == mobile)).first():
+            flash(_('Username, Email or Mobile already exists'), 'danger')
+            return redirect(url_for('signup'))
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(username=username, email=email, mobile=mobile, password=hashed_password, is_verified=True)
         try:
-            new_user = {
-                'username': username,
-                'email': email,
-                'mobile': mobile,
-                'password': password,  # In production, use password hashing
-                'is_verified': True,
-                'created_at': datetime.utcnow()
-            }
-            result = mongo_db.users.insert_one(new_user)
-            logger.info(f"New user created: {username} (ID: {result.inserted_id})")
+            db.session.add(new_user)
+            db.session.commit()
             flash(_('Account created! You can now log in.'), 'success')
             return redirect(url_for('login'))
         except Exception as e:
-            logger.error(f"Error creating user: {str(e)}")
+            logger.exception("Error creating new user:")
             flash(_('An error occurred. Please try again.'), 'danger')
             return redirect(url_for('signup'))
-    
+
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username_or_email = request.form.get('username_or_email').strip()
-        password = request.form.get('password').strip()
+        username_or_email = request.form.get('username_or_email', '').strip()
+        password = request.form.get('password', '').strip()
         remember = True if request.form.get('remember_me') == 'on' else False
-        
-        user_data = mongo_db.users.find_one({
-            '$and': [
-                {'$or': [{'username': username_or_email}, {'email': username_or_email}]},
-                {'password': password}
-            ]
-        })
-        
-        if user_data:
-            user = User(user_data)
+
+        user = User.query.filter((User.username == username_or_email) | (User.email == username_or_email)).first()
+        if user and check_password_hash(user.password, password):
             login_user(user, remember=remember)
-            logger.info(f"User logged in: {user.username} (ID: {user.id})")
             flash(_('Logged in successfully!'), 'success')
             return redirect(url_for('index'))
         else:
-            logger.warning(f"Failed login attempt for username/email: {username_or_email}")
             flash(_('Invalid credentials'), 'danger')
-    
+
     return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
-    logger.info(f"User logged out: {current_user.username} (ID: {current_user.id})")
     logout_user()
     flash(_('Logged out.'), 'info')
     return redirect(url_for('login'))
@@ -327,57 +197,87 @@ def logout():
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form.get('email').strip()
-        user_data = mongo_db.users.find_one({'email': email})
-        
-        if user_data:
-            token = generate_reset_token(email)
-            reset_url = url_for('reset_password', token=token, _external=True)
-            msg = Message("Password Reset Request", recipients=[email])
-            msg.body = f"Hi {user_data['username']},\n\nTo reset your password, click the following link:\n{reset_url}\n\nIf you did not request a password reset, please ignore this email."
-            
-            try:
-                mail.send(msg)
-                logger.info(f"Password reset email sent to: {email}")
-                flash(_('A reset link has been sent to your email.'), "success")
-            except Exception as e:
-                logger.error(f"Error sending reset email to {email}: {str(e)}")
-                flash(_('Error sending email. Please try again later.'), "danger")
+        email = request.form.get('email', '').strip()
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if send_otp_email(user):
+                flash(_('A 6-digit OTP has been sent to your email.'), "success")
+                # Store user_id in session for later use
+                session['reset_user_id'] = user.id
+                return redirect(url_for('verify_otp'))
+            else:
+                flash(_('Error sending OTP. Please try again later.'), "danger")
         else:
-            logger.warning(f"Password reset attempted for non-existent email: {email}")
             flash(_('Email not found.'), "danger")
-        
-        return redirect(url_for('login'))
-    
+        return redirect(url_for('forgot_password'))
     return render_template('forgot_password.html')
 
-@app.route('/reset-password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
-    email = verify_reset_token(token)
-    if not email:
-        logger.warning("Invalid or expired password reset token used")
-        flash(_("The reset link is invalid or has expired."), "danger")
+@app.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    # Get user_id from session
+    user_id = session.get('reset_user_id')
+    if not user_id:
+        flash(_("Invalid request. Please start the password reset process again."), "danger")
         return redirect(url_for('forgot_password'))
+        
+    user = User.query.get_or_404(user_id)
     
     if request.method == 'POST':
-        password = request.form.get('password').strip()
-        confirm_password = request.form.get('confirm_password').strip()
+        entered_otp = request.form.get('otp', '').strip()
+        
+        # Check if OTP exists and is valid
+        if user.otp and user.otp == entered_otp:
+            # Check if OTP is expired (10 minutes validity)
+            otp_created_at = session.get('otp_created_at')
+            if otp_created_at:
+                otp_age = datetime.utcnow().timestamp() - otp_created_at
+                if otp_age <= 600:  # 10 minutes in seconds
+                    # Clear the OTP after successful verification
+                    user.otp = None
+                    db.session.commit()
+                    
+                    # Keep user_id in session for the reset page
+                    return redirect(url_for('reset_password'))
+                else:
+                    flash(_("OTP has expired. Please request a new one."), "danger")
+                    return redirect(url_for('forgot_password'))
+            else:
+                flash(_("Session expired. Please request a new OTP."), "danger")
+                return redirect(url_for('forgot_password'))
+        else:
+            flash(_("Invalid OTP. Please try again."), "danger")
+    
+    return render_template('verify_otp.html')
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    # Get user_id from session
+    user_id = session.get('reset_user_id')
+    if not user_id:
+        flash(_("Invalid request. Please start the password reset process again."), "danger")
+        return redirect(url_for('forgot_password'))
+        
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
         
         if password != confirm_password:
             flash(_("Passwords do not match."), 'danger')
-            return render_template('reset_password.html', token=token)
+            return render_template('reset_password.html')
         
-        user_data = mongo_db.users.find_one({'email': email})
-        if user_data:
-            mongo_db.users.update_one(
-                {'_id': user_data['_id']},
-                {'$set': {'password': password}}
-            )
-            logger.info(f"Password reset successful for: {email}")
-            flash(_("Your password has been updated. Please log in."), "success")
-            return redirect(url_for('login'))
+        user.password = generate_password_hash(password)
+        db.session.commit()
+        
+        # Clear session data
+        session.pop('reset_user_id', None)
+        session.pop('otp_created_at', None)
+        
+        flash(_("Your password has been updated. Please log in."), "success")
+        return redirect(url_for('login'))
     
-    return render_template('reset_password.html', token=token)
+    return render_template('reset_password.html')
 
 # ------------------------
 # Routes for Queue Management
@@ -392,117 +292,104 @@ def index():
 @login_required
 def queue_insert():
     try:
-        person_name = request.form['element']
-        logger.info(f"Received name: '{person_name}'")
+        # Check that the form contains the expected key
+        if 'element' not in request.form:
+            logger.error("Form data missing 'element' key")
+            return jsonify({"message": "Invalid form submission."}), 400
+
+        person_name = request.form['element'].strip()
+        logger.info(f"Received person name: '{person_name}' for user {current_user.username}")
         if not person_name:
             logger.warning("Insert attempt with empty name")
             return jsonify({"message": "Invalid name"}), 400
-        
-        max_order_result = mongo_db.queue.find_one(
-            {'status': 'waiting'},
-            sort=[('order_index', -1)]
+
+        max_order = db.session.query(db.func.max(QueueEntry.order_index))\
+                    .filter(QueueEntry.user_id == current_user.id, QueueEntry.status == 'waiting')\
+                    .scalar() or 0
+
+        new_entry = QueueEntry(
+            user_id=current_user.id,
+            person_name=person_name,
+            priority="normal",
+            category="general",
+            order_index=max_order + 1
         )
-        max_order = max_order_result['order_index'] if max_order_result else 0
-        
-        new_entry = {
-            'person_name': person_name,
-            'priority': "normal",
-            'category': "general",
-            'order_index': max_order + 1,
-            'status': 'waiting',
-            'arrival_time': datetime.utcnow()
-        }
-        
-        result = mongo_db.queue.insert_one(new_entry)
-        inserted_doc = mongo_db.queue.find_one({'_id': result.inserted_id})
-        logger.info(f"Inserted person '{person_name}' into the queue with ID: {result.inserted_id}")
-        
+
+        db.session.add(new_entry)
+        db.session.commit()
+        logger.info(f"Inserted person '{person_name}' into the queue for user {current_user.username}")
         flash(f"{person_name} has been inserted into the queue", "success")
-        return jsonify({"message": "Person inserted into the queue"})
+        return jsonify({"message": f"Inserted: {person_name}"})
     except Exception as e:
-        logger.error(f"Error inserting person: {str(e)}")
+        logger.exception("Error inserting person:")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/delete', methods=['POST'])
 @login_required
 def queue_delete():
     try:
-        entry = mongo_db.queue.find_one(
-            {'status': 'waiting'},
-            sort=[('order_index', 1)]
-        )
-        
+        entry = QueueEntry.query.filter_by(user_id=current_user.id, status='waiting')\
+                .order_by(QueueEntry.order_index).first()
         if not entry:
-            logger.warning("Delete attempt on empty queue")
+            logger.warning("Delete attempt on empty queue for user " + current_user.username)
             return jsonify({"message": "Queue Underflow"}), 400
         
-        person_name = entry['person_name']
-        mongo_db.queue.update_one(
-            {'_id': entry['_id']},
-            {
-                '$set': {
-                    'status': 'served',
-                    'served_time': datetime.utcnow()
-                }
-            }
-        )
-        
-        logger.info(f"Deleted (served) person '{person_name}' from the queue (ID: {entry['_id']})")
+        person_name = entry.person_name
+        entry.status = 'served'
+        entry.served_time = datetime.utcnow()
+        db.session.commit()
+        logger.info(f"Deleted (served) person '{person_name}' from the queue for user {current_user.username}")
         flash(f"{person_name} has been served and removed from the queue", "info")
         return jsonify({"message": f"Deleted: {person_name}"})
     except Exception as e:
-        logger.error(f"Error deleting person: {str(e)}")
+        logger.exception("Error deleting person:")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/display')
 @login_required
 def display_queue():
     try:
-        entries = list(mongo_db.queue.find({'status': 'waiting'}).sort('order_index', 1))
-        queue_list = [{"person_name": e['person_name'], "priority": e['priority'], "category": e['category']} for e in entries]
-        logger.info(f"Queue displayed: {len(queue_list)} entries")
+        entries = QueueEntry.query.filter_by(user_id=current_user.id, status='waiting')\
+                    .order_by(QueueEntry.order_index).all()
+        queue_list = [{"person_name": e.person_name, "priority": e.priority, "category": e.category} for e in entries]
+        logger.info(f"Queue displayed for user {current_user.username}: {len(queue_list)} entries")
         return jsonify({"queue": queue_list})
     except Exception as e:
-        logger.error(f"Error displaying queue: {str(e)}")
+        logger.exception("Error displaying queue:")
         return jsonify({"message": "Internal server error"}), 500
 
 @app.route('/analytics')
 @login_required
 def analytics():
     try:
-        served_entries = list(mongo_db.queue.find({'status': 'served'}))
+        served_entries = QueueEntry.query.filter_by(user_id=current_user.id, status='served').all()
         total_served = len(served_entries)
-        
-        total_wait_time = 0
+        total_wait_time = sum(
+            [(entry.served_time - entry.arrival_time).total_seconds() for entry in served_entries if entry.served_time],
+            0
+        )
+        avg_wait_time = total_wait_time / total_served if total_served else 0
+
         served_details = []
         for entry in served_entries:
-            arrival_str = entry['arrival_time'].isoformat() if 'arrival_time' in entry else "N/A"
-            served_str = entry['served_time'].isoformat() if 'served_time' in entry else "N/A"
-            
-            if 'served_time' in entry and entry['served_time'] and 'arrival_time' in entry and entry['arrival_time']:
-                wait_time = (entry['served_time'] - entry['arrival_time']).total_seconds()
-                total_wait_time += wait_time
-            
             served_details.append({
-                "person_name": entry['person_name'],
-                "arrival_time": arrival_str,
-                "served_time": served_str
+                "person_name": entry.person_name,
+                "arrival_time": entry.arrival_time.isoformat() if entry.arrival_time else "N/A",
+                "served_time": entry.served_time.isoformat() if entry.served_time else "N/A"
             })
-        
-        avg_wait_time = total_wait_time / total_served if total_served else 0
-        
-        logger.info(f"Analytics accessed: {total_served} served entries")
+
+        logger.info(f"Analytics accessed for user {current_user.username}: {total_served} served entries")
         return jsonify({
             "total_served": total_served,
             "avg_wait_time": round(avg_wait_time, 2),
             "served_details": served_details
         })
     except Exception as e:
-        logger.error(f"Error in analytics: {str(e)}")
+        logger.exception("Error in analytics:")
         return jsonify({"message": "Internal server error"}), 500
 
 # ------------------------
-# User Profile
+# Routes for User Profile
 # ------------------------
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -519,36 +406,16 @@ def profile():
             flash(_('All fields are required.'), 'danger')
             return redirect(url_for('profile'))
 
-        try:
-            mongo_db.users.update_one(
-                {'_id': ObjectId(current_user.id)},
-                {
-                    '$set': {
-                        'username': new_username,
-                        'email': new_email,
-                        'mobile': new_mobile
-                    }
-                }
-            )
-            logger.info(f"User profile updated: {current_user.id}")
-            flash(_('Profile updated successfully!'), 'success')
-        except Exception as e:
-            logger.error(f"Error updating profile for user {current_user.id}: {str(e)}")
-            flash(_('Error updating profile. Please try again.'), 'danger')
-            
+        current_user.username = new_username
+        current_user.email = new_email
+        current_user.mobile = new_mobile
+        db.session.commit()
+
+        flash(_('Profile updated successfully!'), 'success')
         return redirect(url_for('profile'))
 
     return render_template('profile.html')
 
-# Root route handler for Vercel
-@app.route('/api/healthcheck')
-def healthcheck():
-    return jsonify({
-        "status": "ok", 
-        "message": "QueueMaster is running",
-        "timestamp": datetime.utcnow().isoformat()
-    })
-
 if __name__ == '__main__':
-    # For local development only
+    logger.info("Starting QueueMaster application...")
     app.run(debug=True)

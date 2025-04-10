@@ -27,7 +27,7 @@ A built-in help modal provides new users with instructions on how to use the app
 Python, Flask, Flask-Login, Flask-Mail, Flask-Babel<br>
 
 **Database**:
-SQLite (default for development) and MongoDB (for production, configurable via environment variable)<br>
+SQLite (default for development) and Posstrgesql (for production, configurable via environment variable)<br>
 
 **Frontend**:
 HTML, Tailwind CSS, Vanilla JavaScript, jsPDF<br>
