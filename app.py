@@ -24,7 +24,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'queuemaster7275@gmail.com'
-EMAIL_HOST_PASSWORD = 'queuemaster@7275$'
+EMAIL_HOST_PASSWORD = 'yxwr ccrn luck uiah'
 EMAIL_USE_TLS = True
 
 # Babel configuration for multi-language support
