@@ -1,88 +1,105 @@
-# QueueMaster
-QueueMaster is a modern, full-stack web application designed to manage real-life queues for customer service centers (e.g., banks, government offices). It provides real-time queue updates, analytics, and multi-language support using Flask, SocketIO, and PostgreSQL (or SQLite for testing). The project offers a user-friendly interface with dark mode support and an integrated help modal for new users.
 
-## Features
+# QueueMaster 🎫
 
+A modern queue management system built with Flask and PostgreSQL, featuring real-time updates and a sleek UI powered by Tailwind CSS.
 
-**Real-Time Queue Updates**:
-Uses Flask-SocketIO to update the queue and analytics in real time without the need for manual refresh.<br>
+## 🌟 Features
 
-**User Authentication**:
-Sign-up, login, logout, and password reset functionality implemented with Flask-Login and Flask-Mail.<br>
+- **User Authentication**
+  - Secure signup and login
+  - Password reset functionality with email verification
+  - Profile management
 
-**Multi-Language Support**:
-Integrated with Flask-Babel to support multiple languages (English, Spanish, French).<br>
+- **Queue Management**
+  - Add people to queue with real-time updates
+  - Remove/serve people from queue
+  - Live queue count and statistics
+  - Export queue data to PDF
 
-**Analytics**:
-Displays total customers served and average wait time, with an option to export analytics as a PDF report using jsPDF.<br>
+- **User Interface**
+  - Clean, modern design with Tailwind CSS
+  - Dark mode support
+  - Responsive layout for all devices
+  - Interactive notifications
 
-**Responsive UI with Dark Mode**:
-Built using Tailwind CSS, ensuring a responsive, modern interface with dark mode.<br>
+- **Security**
+  - Secure password hashing
+  - Protected routes
+  - Environment variable management
+  - Session handling
 
-**Help Modal**:
-A built-in help modal provides new users with instructions on how to use the application.<br>
+## 🛠️ Tech Stack
 
-## Technologies Used
-**Backend**:
-Python, Flask, Flask-Login, Flask-Mail, Flask-Babel<br>
+- **Backend:** Python/Flask
+- **Database:** PostgreSQL
+- **Frontend:** HTML, JavaScript, Tailwind CSS
+- **Authentication:** Flask-Login
+- **Email Service:** SMTP (Gmail)
+- **Additional Libraries:**
+  - Flask-SQLAlchemy
+  - Flask-Babel (Internationalization)
 
-**Database**:
-SQLite (default for development) and Posstrgesql (for production, configurable via environment variable)<br>
+## 📋 Prerequisites
 
-**Frontend**:
-HTML, Tailwind CSS, Vanilla JavaScript, jsPDF<br>
+- Python 3.11+
+- PostgreSQL database
+- SMTP credentials (for email functionality)
 
-**Others**:
-psycopg2 (for PostgreSQL connection pooling)<br>
+## 🚀 Quick Start
 
-## Installation
-1)Clone the repository:
-```sh
-git clone https://github.com/thepratholic/QueueMaster.git
+1. Fork this project on Replit
+2. Set up your environment variables in Replit Secrets:
+   - `SMTP_EMAIL`: Your Gmail address
+   - `SMTP_PASSWORD`: Your Gmail app password
+   - `DATABASE_URL`: Your PostgreSQL connection string
+
+3. Click the Run button to start the application
+
+## 💡 Usage
+
+1. **Sign Up/Login**
+   - Create an account or login with existing credentials
+   - Use the forgot password feature if needed
+
+2. **Managing Queues**
+   - Add people to queue using the input field
+   - Click "Delete" to serve the next person
+   - View live queue status
+   - Export queue data as needed
+
+3. **Profile Management**
+   - Update your username, email, and mobile number
+   - Manage your account settings
+
+## 🔐 Environment Variables
+
+Required environment variables:
+```
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+DATABASE_URL=postgresql://username:password@host:5432/database_name
 ```
 
-2)Navigate to the project directory:
-```sh
-cd QueueMaster
-```
+## 🤝 Contributing
 
-3)Create a virtual environment (optional but recommended):
-```sh
-python -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
-```
-4)Install the required dependencies:
-```sh
-pip install -r requirements.txt
-```
+Contributions are welcome! Please feel free to submit pull requests.
 
-5)Run the Flask application:
-```sh
-python app.py
-```
+## 📝 License
 
-6)Open your browser and go to http://127.0.0.1:5000/ to view the application.<br>
+This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 👤 Author
 
+**Pratham Chelaramani**
+- GitHub: [@thepratholic](https://github.com/thepratholic)
+- LinkedIn: [thepratholic](https://www.linkedin.com/in/thepratholic)
+- Email: chelaramanipratham@gmail.com
 
-## Some real-world use cases:
+## 🙏 Acknowledgments
 
-1)Customer Service Centers: Managing customer queues at service counters (e.g., banks, government offices) to ensure a smooth and orderly process, reducing wait times and improving customer satisfaction.<br>
+- Flask documentation and community
+- Tailwind CSS team
 
-2)Healthcare Clinics: Organizing patient queues at clinics or hospitals to streamline appointment handling and minimize congestion in waiting areas, allowing healthcare providers to better manage patient flow.<br>
+## 📱 Support
 
-3)Event Management: Handling attendee queues at events, concerts, or exhibitions, ensuring efficient entry and avoiding long lines, while providing real-time updates on queue status.<br>
-
-4)Retail Stores: Managing queues at checkout counters or customer support desks in large retail environments, helping improve service efficiency and reduce perceived wait times.<br>
-
-5)Public Transport Systems: Organizing passenger boarding at bus stations, airports, or train terminals, ensuring a fair and timely boarding process for passengers in line.<br>
-
-
-## Contributing
-1)Fork the repository.<br>
-2)Create your feature branch (git checkout -b feature/YourFeature).<br>
-3)Commit your changes (git commit -m 'Add some feature').<br>
-4)Push to the branch (git push origin feature/YourFeature).<br>
-5)Open a Pull Request.<br>
-
-Please feel free to contribute in this project!!
+For support, email chelaramanipratham@gmail.com or create an issue in the repository.
