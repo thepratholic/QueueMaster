@@ -28,6 +28,12 @@ A modern queue management system built with Flask and PostgreSQL, featuring real
   - Environment variable management
   - Session handling
 
+
+## Vedio Link:
+```bash
+https://drive.google.com/file/d/15uyA86koWJSXLa-BzBxEftHV1-ymwb2T/view?usp=sharing
+```
+
 ## 🛠️ Tech Stack
 
 - **Backend:** Python/Flask
